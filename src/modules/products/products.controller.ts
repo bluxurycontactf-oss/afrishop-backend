@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, Headers, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
@@ -12,6 +12,14 @@ export class ProductsController {
   @ApiOperation({ summary: 'Liste des produits (public)' })
   findAll(@Query() query: any) {
     return this.products.findAll(query);
+  }
+
+  @Post()
+  @ApiOperation({ summary: 'Créer un produit manuellement' })
+  create(@Body() body: any, @Headers('x-admin-key') key: string) {
+    const ADMIN_KEY = process.env.ADMIN_API_KEY || 'afrishop-admin-2024';
+    if (key !== ADMIN_KEY) throw new UnauthorizedException('Clé admin invalide');
+    return this.products.create(body);
   }
 
   @Get('featured')
@@ -30,16 +38,18 @@ export class ProductsController {
   }
 
   @Put(':id')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  update(@Param('id') id: string, @Body() body: any) {
+  @ApiOperation({ summary: 'Mettre à jour un produit' })
+  update(@Param('id') id: string, @Body() body: any, @Headers('x-admin-key') key: string) {
+    const ADMIN_KEY = process.env.ADMIN_API_KEY || 'afrishop-admin-2024';
+    if (key !== ADMIN_KEY) throw new UnauthorizedException('Clé admin invalide');
     return this.products.update(id, body);
   }
 
   @Delete(':id')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  delete(@Param('id') id: string) {
+  @ApiOperation({ summary: 'Supprimer un produit' })
+  delete(@Param('id') id: string, @Headers('x-admin-key') key: string) {
+    const ADMIN_KEY = process.env.ADMIN_API_KEY || 'afrishop-admin-2024';
+    if (key !== ADMIN_KEY) throw new UnauthorizedException('Clé admin invalide');
     return this.products.delete(id);
   }
 }

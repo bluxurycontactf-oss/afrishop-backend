@@ -58,6 +58,43 @@ export declare class ProductsController {
         limit: number;
         pages: number;
     }>;
+    create(body: any, key: string): Promise<{
+        images: {
+            id: string;
+            createdAt: Date;
+            sortOrder: number;
+            url: string;
+            alt: string | null;
+            productId: string;
+        }[];
+    } & {
+        id: string;
+        name: string;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
+        nameEn: string | null;
+        description: string | null;
+        tags: string[];
+        categoryId: string | null;
+        descriptionEn: string | null;
+        shortDesc: string | null;
+        price: import("@prisma/client/runtime/library").Decimal;
+        comparePrice: import("@prisma/client/runtime/library").Decimal | null;
+        costPrice: import("@prisma/client/runtime/library").Decimal | null;
+        currency: string;
+        stock: number;
+        sku: string | null;
+        weight: import("@prisma/client/runtime/library").Decimal | null;
+        isFeatured: boolean;
+        metaTitle: string | null;
+        metaDescription: string | null;
+        aliexpressUrl: string | null;
+        aliexpressId: string | null;
+        lastSyncAt: Date | null;
+        supplierId: string | null;
+    }>;
     getFeatured(limit?: string): Promise<({
         images: {
             id: string;
@@ -241,7 +278,7 @@ export declare class ProductsController {
         lastSyncAt: Date | null;
         supplierId: string | null;
     }>;
-    update(id: string, body: any): Promise<{
+    update(id: string, body: any, key: string): Promise<{
         id: string;
         name: string;
         isActive: boolean;
@@ -269,7 +306,7 @@ export declare class ProductsController {
         lastSyncAt: Date | null;
         supplierId: string | null;
     }>;
-    delete(id: string): Promise<{
+    delete(id: string, key: string): Promise<{
         id: string;
         name: string;
         isActive: boolean;

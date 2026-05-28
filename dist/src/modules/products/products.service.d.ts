@@ -211,6 +211,43 @@ export declare class ProductsService {
         lastSyncAt: Date | null;
         supplierId: string | null;
     }>;
+    create(data: any): Promise<{
+        images: {
+            id: string;
+            createdAt: Date;
+            sortOrder: number;
+            url: string;
+            alt: string | null;
+            productId: string;
+        }[];
+    } & {
+        id: string;
+        name: string;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
+        nameEn: string | null;
+        description: string | null;
+        tags: string[];
+        categoryId: string | null;
+        descriptionEn: string | null;
+        shortDesc: string | null;
+        price: import("@prisma/client/runtime/library").Decimal;
+        comparePrice: import("@prisma/client/runtime/library").Decimal | null;
+        costPrice: import("@prisma/client/runtime/library").Decimal | null;
+        currency: string;
+        stock: number;
+        sku: string | null;
+        weight: import("@prisma/client/runtime/library").Decimal | null;
+        isFeatured: boolean;
+        metaTitle: string | null;
+        metaDescription: string | null;
+        aliexpressUrl: string | null;
+        aliexpressId: string | null;
+        lastSyncAt: Date | null;
+        supplierId: string | null;
+    }>;
     update(id: string, data: any): Promise<{
         id: string;
         name: string;

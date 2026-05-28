@@ -31,9 +31,7 @@ let ProductsService = class ProductsService {
         if (featured !== undefined)
             where.isFeatured = featured;
         if (active !== undefined)
-            where.isActive = active;
-        else
-            where.isActive = true;
+            where.isActive = String(active) === 'true';
         const [products, total] = await Promise.all([
             this.prisma.product.findMany({
                 where, skip, take: limit,
@@ -71,6 +69,26 @@ let ProductsService = class ProductsService {
         if (!product)
             throw new common_1.NotFoundException('Produit introuvable');
         return product;
+    }
+    async create(data) {
+        const slugify = (await Promise.resolve().then(() => require('slugify'))).default;
+        let slug = slugify(data.name || 'produit', { lower: true, strict: true });
+        const existing = await this.prisma.product.findUnique({ where: { slug } });
+        if (existing)
+            slug = `${slug}-${Date.now()}`;
+        const { images, ...rest } = data;
+        return this.prisma.product.create({
+            data: {
+                ...rest,
+                slug,
+                currency: rest.currency || 'XOF',
+                isActive: rest.isActive !== undefined ? rest.isActive : true,
+                images: images?.length ? {
+                    create: images.map((url, i) => ({ url, sortOrder: i })),
+                } : undefined,
+            },
+            include: { images: true },
+        });
     }
     async update(id, data) {
         return this.prisma.product.update({ where: { id }, data });

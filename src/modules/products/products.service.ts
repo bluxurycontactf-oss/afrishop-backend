@@ -20,8 +20,8 @@ export class ProductsService {
     ];
     if (categoryId) where.categoryId = categoryId;
     if (featured !== undefined) where.isFeatured = featured;
-    if (active !== undefined) where.isActive = active;
-    else where.isActive = true;
+    if (active !== undefined) where.isActive = String(active) === 'true';
+    // Si active n'est pas spécifié ET pas de clé admin → seulement actifs
 
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({
@@ -61,6 +61,27 @@ export class ProductsService {
     });
     if (!product) throw new NotFoundException('Produit introuvable');
     return product;
+  }
+
+  async create(data: any) {
+    const slugify = (await import('slugify')).default;
+    let slug = slugify(data.name || 'produit', { lower: true, strict: true });
+    const existing = await this.prisma.product.findUnique({ where: { slug } });
+    if (existing) slug = `${slug}-${Date.now()}`;
+
+    const { images, ...rest } = data;
+    return this.prisma.product.create({
+      data: {
+        ...rest,
+        slug,
+        currency: rest.currency || 'XOF',
+        isActive: rest.isActive !== undefined ? rest.isActive : true,
+        images: images?.length ? {
+          create: images.map((url: string, i: number) => ({ url, sortOrder: i })),
+        } : undefined,
+      },
+      include: { images: true },
+    });
   }
 
   async update(id: string, data: any) {
