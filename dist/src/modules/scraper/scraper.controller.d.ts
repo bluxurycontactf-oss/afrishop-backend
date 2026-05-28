@@ -58,6 +58,6 @@ export declare class ScraperController {
     }>;
     previewProduct(dto: {
         url: string;
-    }): Promise<import("./scraper.service").AliexpressProduct>;
+    }, key: string): Promise<import("./scraper.service").AliexpressProduct>;
 }
 export {};
