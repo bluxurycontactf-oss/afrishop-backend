@@ -14,9 +14,9 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrdersController = void 0;
 const common_1 = require("@nestjs/common");
-const passport_1 = require("@nestjs/passport");
 const swagger_1 = require("@nestjs/swagger");
 const orders_service_1 = require("./orders.service");
+const admin_key_guard_1 = require("../../common/guards/admin-key.guard");
 const customer_jwt_guard_1 = require("../auth/customer-jwt.guard");
 let OrdersController = class OrdersController {
     constructor(orders) {
@@ -24,6 +24,9 @@ let OrdersController = class OrdersController {
     }
     create(dto) {
         return this.orders.create(dto);
+    }
+    findByPhone(phone) {
+        return this.orders.findByPhone(phone);
     }
     findOne(id) {
         return this.orders.findOne(id);
@@ -51,8 +54,16 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "create", null);
 __decorate([
+    (0, common_1.Get)('by-phone/:phone'),
+    (0, swagger_1.ApiOperation)({ summary: 'Chercher commandes par numéro de téléphone' }),
+    __param(0, (0, common_1.Param)('phone')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "findByPhone", null);
+__decorate([
     (0, common_1.Get)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Détail commande par ID' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Détail commande par ID ou numéro' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -60,7 +71,6 @@ __decorate([
 ], OrdersController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Get)('my/orders'),
-    (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(customer_jwt_guard_1.CustomerJwtGuard),
     (0, swagger_1.ApiOperation)({ summary: 'Mes commandes (client connecté)' }),
     __param(0, (0, common_1.Request)()),
@@ -71,8 +81,7 @@ __decorate([
 ], OrdersController.prototype, "getMyOrders", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.UseGuards)(admin_key_guard_1.AdminKeyGuard),
     (0, swagger_1.ApiOperation)({ summary: 'Liste toutes les commandes (admin)' }),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
@@ -81,8 +90,7 @@ __decorate([
 ], OrdersController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)('stats/dashboard'),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.UseGuards)(admin_key_guard_1.AdminKeyGuard),
     (0, swagger_1.ApiOperation)({ summary: 'Stats dashboard (admin)' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -90,8 +98,7 @@ __decorate([
 ], OrdersController.prototype, "getStats", null);
 __decorate([
     (0, common_1.Put)(':id/status'),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.UseGuards)(admin_key_guard_1.AdminKeyGuard),
     (0, swagger_1.ApiOperation)({ summary: 'Mettre à jour le statut (admin)' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),

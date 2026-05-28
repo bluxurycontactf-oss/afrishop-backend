@@ -1,189 +1,189 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
-import { v4 as uuidv4 } from 'uuid';
+
+// Normalise les statuts frontend (lowercase) → backend (UPPERCASE)
+const normalizeStatus = (s: string): string => {
+  const map: Record<string, string> = {
+    confirmed: 'PAID', paid: 'PAID',
+    processing: 'PROCESSING',
+    shipped: 'SHIPPED',
+    delivered: 'DELIVERED',
+    cancelled: 'CANCELLED', canceled: 'CANCELLED',
+    pending: 'PENDING',
+  };
+  return map[s?.toLowerCase()] || s?.toUpperCase() || 'PENDING';
+};
 
 @Injectable()
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: {
-    customerName: string; customerEmail: string; customerPhone: string;
-    shippingAddress: string; shippingCity: string; shippingCountry: string;
-    items: { productId: string; variantId?: string; quantity: number }[];
-    couponCode?: string; customerId?: string;
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone: string;
+    shippingAddress?: string;
+    shippingCity?: string;
+    shippingCountry?: string;
+    items: {
+      productId?: string;
+      productName?: string;
+      quantity?: number;
+      qty?: number;
+      price?: number;
+      variantId?: string;
+    }[];
+    fedaPayId?: string;
+    fedaStatus?: string;
+    payMethod?: string;
+    orderRef?: string;
+    couponCode?: string;
+    customerId?: string;
   }) {
-    // Vérifier et calculer les articles
     let subtotal = 0;
     const orderItems = [];
 
     for (const item of dto.items) {
-      const product = await this.prisma.product.findUnique({
-        where: { id: item.productId },
-        include: { variants: true },
-      });
-      if (!product) throw new BadRequestException(`Produit ${item.productId} introuvable`);
-      if (!product.isActive) throw new BadRequestException(`Produit ${product.name} non disponible`);
+      const qty = item.quantity || item.qty || 1;
+      let price = Number(item.price) || 0;
+      let productName = item.productName || 'Produit';
+      let productId: string | null = null;
 
-      let price = Number(product.price);
-      let variantName = '';
-
-      if (item.variantId) {
-        const variant = product.variants.find(v => v.id === item.variantId);
-        if (variant) { price = Number(variant.price); variantName = variant.name; }
+      // Chercher le produit en base si l'ID est fourni et valide (UUID)
+      if (item.productId && /^[0-9a-f-]{36}$/i.test(item.productId)) {
+        try {
+          const product = await this.prisma.product.findUnique({ where: { id: item.productId } });
+          if (product) {
+            productId = product.id;
+            productName = product.name;
+            if (!price) price = Number(product.price);
+          }
+        } catch { /* produit non trouvé, utiliser les infos fournies */ }
       }
 
-      const total = price * item.quantity;
+      const total = price * qty;
       subtotal += total;
       orderItems.push({
-        productId: item.productId,
-        variantId: item.variantId,
-        quantity: item.quantity,
+        productId,
+        variantId: item.variantId || null,
+        quantity: qty,
         price,
         total,
-        productName: product.name,
-        variantName,
+        productName,
+        variantName: '',
       });
     }
 
-    // Appliquer coupon
-    let discount = 0;
-    let couponId = null;
-    if (dto.couponCode) {
-      const coupon = await this.prisma.coupon.findFirst({
-        where: { code: dto.couponCode, isActive: true },
-      });
-      if (coupon) {
-        if (!coupon.expiresAt || coupon.expiresAt > new Date()) {
-          if (!coupon.usageLimit || coupon.usageCount < coupon.usageLimit) {
-            discount = coupon.type === 'PERCENTAGE'
-              ? subtotal * (Number(coupon.value) / 100)
-              : Number(coupon.value);
-            couponId = coupon.id;
-          }
-        }
-      }
-    }
-
-    const shippingCost = 0; // Livraison gratuite ou calculée
-    const total = subtotal - discount + shippingCost;
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const total = subtotal;
+    const orderNumber = dto.orderRef || `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
     const order = await this.prisma.order.create({
       data: {
         orderNumber,
-        customerName: dto.customerName,
-        customerEmail: dto.customerEmail,
-        customerPhone: dto.customerPhone,
-        shippingAddress: dto.shippingAddress,
-        shippingCity: dto.shippingCity,
-        shippingCountry: dto.shippingCountry,
-        subtotal, shippingCost, discount, total,
+        customerName:    dto.customerName    || dto.customerPhone,
+        customerEmail:   dto.customerEmail   || null,
+        customerPhone:   dto.customerPhone,
+        shippingAddress: dto.shippingAddress || dto.shippingCity || '',
+        shippingCity:    dto.shippingCity    || dto.shippingCountry || '',
+        shippingCountry: dto.shippingCountry || 'CI',
+        subtotal, shippingCost: 0, discount: 0, total,
         currency: 'XOF',
-        customerId: dto.customerId,
-        couponId,
-        status: 'PENDING',
+        customerId: dto.customerId || null,
+        status: normalizeStatus(dto.fedaStatus || 'confirmed') as any,
         items: { create: orderItems },
       },
-      include: { items: { include: { product: { include: { images: { take: 1 } } } } } },
+      include: { items: true },
     });
 
-    // Incrémenter utilisation coupon
-    if (couponId) {
-      await this.prisma.coupon.update({
-        where: { id: couponId },
-        data: { usageCount: { increment: 1 } },
-      });
-    }
-
     // Créer le tracking
-    await this.prisma.tracking.create({ data: { orderId: order.id } });
+    try {
+      await this.prisma.tracking.create({ data: { orderId: order.id } });
+    } catch { /* ignore si déjà créé */ }
 
     return order;
   }
 
   async findAll(query: { page?: number; limit?: number; status?: string; search?: string }) {
     const { page = 1, limit = 20, status, search } = query;
-    const skip = (page - 1) * limit;
+    const skip = (page - 1) * Number(limit);
     const where: any = {};
-    if (status) where.status = status;
+    if (status) where.status = normalizeStatus(status);
     if (search) where.OR = [
       { orderNumber: { contains: search } },
       { customerEmail: { contains: search, mode: 'insensitive' } },
-      { customerName: { contains: search, mode: 'insensitive' } },
+      { customerName:  { contains: search, mode: 'insensitive' } },
+      { customerPhone: { contains: search } },
     ];
 
     const [orders, total] = await Promise.all([
       this.prisma.order.findMany({
-        where, skip, take: limit,
-        include: { items: true, payment: true, tracking: true },
+        where, skip, take: Number(limit),
+        include: { items: true, tracking: true },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.order.count({ where }),
     ]);
-    return { orders, total, page, limit, pages: Math.ceil(total / limit) };
+    return { orders, total, page, limit, pages: Math.ceil(total / Number(limit)) };
   }
 
   async findOne(id: string) {
-    const order = await this.prisma.order.findUnique({
-      where: { id },
-      include: {
-        items: { include: { product: { include: { images: { take: 1 } } }, variant: true } },
-        payment: true,
-        tracking: true,
-        customer: true,
-      },
+    const order = await this.prisma.order.findFirst({
+      where: { OR: [{ id }, { orderNumber: id }] },
+      include: { items: true, tracking: true },
     });
     if (!order) throw new NotFoundException('Commande introuvable');
     return order;
   }
 
   async updateStatus(id: string, status: string) {
-    return this.prisma.order.update({ where: { id }, data: { status: status as any } });
+    return this.prisma.order.update({
+      where: { id },
+      data: { status: normalizeStatus(status) as any },
+    });
   }
 
-  async findByCustomer(customerId: string, query: { page?: number; limit?: number } = {}) {
+  async findByCustomer(customerId: string, query: any = {}) {
     const { page = 1, limit = 20 } = query;
     const [orders, total] = await Promise.all([
       this.prisma.order.findMany({
         where: { customerId },
-        skip: (page - 1) * limit,
-        take: limit,
-        include: {
-          items: { include: { product: { include: { images: { take: 1 } } } } },
-          payment: true,
-          tracking: true,
-        },
+        skip: (page - 1) * Number(limit),
+        take: Number(limit),
+        include: { items: true, tracking: true },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.order.count({ where: { customerId } }),
     ]);
-    return { orders, total, page, limit, pages: Math.ceil(total / limit) };
+    return { orders, total, page, limit, pages: Math.ceil(total / Number(limit)) };
+  }
+
+  async findByPhone(phone: string) {
+    return this.prisma.order.findMany({
+      where: { customerPhone: { contains: phone.replace(/\D/g, '').slice(-8) } },
+      include: { items: true, tracking: true },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
   }
 
   async getDashboardStats() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
-    const [totalOrders, todayOrders, totalRevenue, pendingOrders] = await Promise.all([
+    const [totalOrders, todayOrders, revenue, pendingOrders, totalProducts, totalCustomers] = await Promise.all([
       this.prisma.order.count(),
       this.prisma.order.count({ where: { createdAt: { gte: today } } }),
       this.prisma.order.aggregate({
         where: { status: { in: ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'] } },
         _sum: { total: true },
       }),
-      this.prisma.order.count({ where: { status: 'PENDING' } }),
+      this.prisma.order.count({ where: { status: { in: ['PENDING', 'PAID'] } } }),
+      this.prisma.product.count({ where: { isActive: true } }),
+      this.prisma.customer.count(),
     ]);
-
-    const totalProducts = await this.prisma.product.count({ where: { isActive: true } });
-    const totalCustomers = await this.prisma.customer.count();
-
     return {
-      totalOrders,
-      todayOrders,
-      totalRevenue: totalRevenue._sum.total || 0,
-      pendingOrders,
-      totalProducts,
-      totalCustomers,
+      totalOrders, todayOrders,
+      totalRevenue: revenue._sum.total || 0,
+      pendingOrders, totalProducts, totalCustomers,
     };
   }
 }

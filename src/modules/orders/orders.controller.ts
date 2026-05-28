@@ -1,7 +1,8 @@
-import { Controller, Post, Get, Put, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Post, Get, Put, Body, Param, Query, UseGuards, Request, Headers } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { OrdersService } from './orders.service';
+import { AdminKeyGuard } from '../../common/guards/admin-key.guard';
 import { CustomerJwtGuard } from '../auth/customer-jwt.guard';
 
 @ApiTags('Commandes')
@@ -16,41 +17,43 @@ export class OrdersController {
     return this.orders.create(dto);
   }
 
+  @Get('by-phone/:phone')
+  @ApiOperation({ summary: 'Chercher commandes par numéro de téléphone' })
+  findByPhone(@Param('phone') phone: string) {
+    return this.orders.findByPhone(phone);
+  }
+
   @Get(':id')
-  @ApiOperation({ summary: 'Détail commande par ID' })
+  @ApiOperation({ summary: 'Détail commande par ID ou numéro' })
   findOne(@Param('id') id: string) {
     return this.orders.findOne(id);
   }
 
   /* ── CLIENT CONNECTÉ ── */
   @Get('my/orders')
-  @ApiBearerAuth()
   @UseGuards(CustomerJwtGuard)
   @ApiOperation({ summary: 'Mes commandes (client connecté)' })
   getMyOrders(@Request() req: any, @Query() query: any) {
     return this.orders.findByCustomer(req.user.id, query);
   }
 
-  /* ── ADMIN ── */
+  /* ── ADMIN (clé admin ou JWT) ── */
   @Get()
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminKeyGuard)
   @ApiOperation({ summary: 'Liste toutes les commandes (admin)' })
   findAll(@Query() query: any) {
     return this.orders.findAll(query);
   }
 
   @Get('stats/dashboard')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminKeyGuard)
   @ApiOperation({ summary: 'Stats dashboard (admin)' })
   getStats() {
     return this.orders.getDashboardStats();
   }
 
   @Put(':id/status')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AdminKeyGuard)
   @ApiOperation({ summary: 'Mettre à jour le statut (admin)' })
   updateStatus(@Param('id') id: string, @Body() body: { status: string }) {
     return this.orders.updateStatus(id, body.status);
