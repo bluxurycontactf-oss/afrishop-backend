@@ -5,6 +5,7 @@ import { PrismaService } from '../../config/prisma.service';
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
+  // v2 - fix query params
   async findAll(query: any = {}) {
     const page  = Math.max(1, parseInt(query.page)  || 1);
     const limit = Math.min(200, parseInt(query.limit) || 20);
