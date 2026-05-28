@@ -33,7 +33,7 @@ let ProductsService = class ProductsService {
         const [products, total] = await Promise.all([
             this.prisma.product.findMany({
                 where, skip, take: limit,
-                include: { images: { orderBy: { sortOrder: 'asc' }, take: 1 }, category: true },
+                include: { images: { orderBy: { sortOrder: 'asc' }, take: 1 } },
                 orderBy: { createdAt: 'desc' },
             }),
             this.prisma.product.count({ where }),

@@ -4,19 +4,6 @@ export declare class ProductsService {
     constructor(prisma: PrismaService);
     findAll(query?: any): Promise<{
         products: ({
-            category: {
-                id: string;
-                name: string;
-                isActive: boolean;
-                createdAt: Date;
-                updatedAt: Date;
-                slug: string;
-                nameEn: string | null;
-                description: string | null;
-                image: string | null;
-                parentId: string | null;
-                sortOrder: number;
-            };
             images: {
                 id: string;
                 createdAt: Date;
