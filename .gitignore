@@ -1,0 +1,19 @@
+# Dépendances
+node_modules/
+dist/
+
+# Environnement (JAMAIS committer les secrets)
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+firebase-debug.log
+
+# Prisma
+prisma/*.db
+
+# Divers
+.DS_Store
+*.local
