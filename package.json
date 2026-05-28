@@ -21,6 +21,10 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@nestjs/cli": "^10.0.0",
+    "prisma": "^5.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.1",
     "@nestjs/bull": "^10.0.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0",
