@@ -17,28 +17,30 @@ let ProductsService = class ProductsService {
         this.prisma = prisma;
     }
     async findAll(query = {}) {
-        const page = Math.max(1, parseInt(query.page) || 1);
-        const limit = Math.min(200, parseInt(query.limit) || 20);
-        const skip = (page - 1) * limit;
-        const { search, categoryId } = query;
-        const where = {};
-        if (search)
-            where.name = { contains: search, mode: 'insensitive' };
-        if (categoryId)
-            where.categoryId = categoryId;
-        if (query.featured !== undefined)
-            where.isFeatured = query.featured === 'true' || query.featured === true;
-        if (query.active !== undefined)
-            where.isActive = query.active === 'true' || query.active === true;
-        const [products, total] = await Promise.all([
-            this.prisma.product.findMany({
-                where, skip, take: limit,
-                include: { images: { orderBy: { sortOrder: 'asc' }, take: 1 } },
-                orderBy: { createdAt: 'desc' },
-            }),
-            this.prisma.product.count({ where }),
-        ]);
-        return { products, total, page, limit, pages: Math.ceil(total / limit) };
+        try {
+            const page = Math.max(1, parseInt(query.page) || 1);
+            const limit = Math.min(200, parseInt(query.limit) || 20);
+            const skip = (page - 1) * limit;
+            const where = {};
+            if (query.search)
+                where.name = { contains: query.search, mode: 'insensitive' };
+            if (query.categoryId)
+                where.categoryId = query.categoryId;
+            if (query.active !== undefined)
+                where.isActive = query.active === 'true' || query.active === true;
+            const [products, total] = await Promise.all([
+                this.prisma.product.findMany({
+                    where, skip, take: limit,
+                    include: { images: true },
+                    orderBy: { createdAt: 'desc' },
+                }),
+                this.prisma.product.count({ where }),
+            ]);
+            return { products, total, page, limit, pages: Math.ceil(total / limit) };
+        }
+        catch (e) {
+            throw new Error(`findAll error: ${e.message}`);
+        }
     }
     async findOne(id) {
         const product = await this.prisma.product.findUnique({

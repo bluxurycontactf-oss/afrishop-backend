@@ -38,7 +38,6 @@ export declare class ScraperController {
         nameEn: string | null;
         description: string | null;
         tags: string[];
-        categoryId: string | null;
         descriptionEn: string | null;
         shortDesc: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -54,6 +53,7 @@ export declare class ScraperController {
         aliexpressUrl: string | null;
         aliexpressId: string | null;
         lastSyncAt: Date | null;
+        categoryId: string | null;
         supplierId: string | null;
     }>;
     previewProduct(dto: {

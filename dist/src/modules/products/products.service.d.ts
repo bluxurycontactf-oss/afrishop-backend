@@ -22,7 +22,6 @@ export declare class ProductsService {
             nameEn: string | null;
             description: string | null;
             tags: string[];
-            categoryId: string | null;
             descriptionEn: string | null;
             shortDesc: string | null;
             price: import("@prisma/client/runtime/library").Decimal;
@@ -38,6 +37,7 @@ export declare class ProductsService {
             aliexpressUrl: string | null;
             aliexpressId: string | null;
             lastSyncAt: Date | null;
+            categoryId: string | null;
             supplierId: string | null;
         })[];
         total: number;
@@ -100,7 +100,6 @@ export declare class ProductsService {
         nameEn: string | null;
         description: string | null;
         tags: string[];
-        categoryId: string | null;
         descriptionEn: string | null;
         shortDesc: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -116,6 +115,7 @@ export declare class ProductsService {
         aliexpressUrl: string | null;
         aliexpressId: string | null;
         lastSyncAt: Date | null;
+        categoryId: string | null;
         supplierId: string | null;
     }>;
     findBySlug(slug: string): Promise<{
@@ -173,7 +173,6 @@ export declare class ProductsService {
         nameEn: string | null;
         description: string | null;
         tags: string[];
-        categoryId: string | null;
         descriptionEn: string | null;
         shortDesc: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -189,6 +188,7 @@ export declare class ProductsService {
         aliexpressUrl: string | null;
         aliexpressId: string | null;
         lastSyncAt: Date | null;
+        categoryId: string | null;
         supplierId: string | null;
     }>;
     create(data: any): Promise<{
@@ -210,7 +210,6 @@ export declare class ProductsService {
         nameEn: string | null;
         description: string | null;
         tags: string[];
-        categoryId: string | null;
         descriptionEn: string | null;
         shortDesc: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -226,6 +225,7 @@ export declare class ProductsService {
         aliexpressUrl: string | null;
         aliexpressId: string | null;
         lastSyncAt: Date | null;
+        categoryId: string | null;
         supplierId: string | null;
     }>;
     update(id: string, data: any): Promise<{
@@ -238,7 +238,6 @@ export declare class ProductsService {
         nameEn: string | null;
         description: string | null;
         tags: string[];
-        categoryId: string | null;
         descriptionEn: string | null;
         shortDesc: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -254,6 +253,7 @@ export declare class ProductsService {
         aliexpressUrl: string | null;
         aliexpressId: string | null;
         lastSyncAt: Date | null;
+        categoryId: string | null;
         supplierId: string | null;
     }>;
     delete(id: string): Promise<{
@@ -266,7 +266,6 @@ export declare class ProductsService {
         nameEn: string | null;
         description: string | null;
         tags: string[];
-        categoryId: string | null;
         descriptionEn: string | null;
         shortDesc: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -282,6 +281,7 @@ export declare class ProductsService {
         aliexpressUrl: string | null;
         aliexpressId: string | null;
         lastSyncAt: Date | null;
+        categoryId: string | null;
         supplierId: string | null;
     }>;
     getFeatured(limit?: number): Promise<({
@@ -303,7 +303,6 @@ export declare class ProductsService {
         nameEn: string | null;
         description: string | null;
         tags: string[];
-        categoryId: string | null;
         descriptionEn: string | null;
         shortDesc: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
@@ -319,6 +318,7 @@ export declare class ProductsService {
         aliexpressUrl: string | null;
         aliexpressId: string | null;
         lastSyncAt: Date | null;
+        categoryId: string | null;
         supplierId: string | null;
     })[]>;
 }
