@@ -1,6 +1,5 @@
 # Dépendances
 node_modules/
-dist/
 
 # Environnement (JAMAIS committer les secrets)
 .env
