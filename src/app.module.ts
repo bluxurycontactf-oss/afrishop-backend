@@ -22,12 +22,11 @@ import { PrismaModule } from './config/prisma.module';
     // Rate limiting
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
 
-    // Queue Redis
+    // Queue Redis — supporte REDIS_URL (Render) ou REDIS_HOST/PORT (local)
     BullModule.forRoot({
-      redis: {
-        host: process.env.REDIS_HOST || 'redis',
-        port: parseInt(process.env.REDIS_PORT) || 6379,
-      },
+      redis: process.env.REDIS_URL
+        ? process.env.REDIS_URL
+        : { host: process.env.REDIS_HOST || '127.0.0.1', port: parseInt(process.env.REDIS_PORT) || 6379 },
     }),
 
     // Prisma (base de données)
