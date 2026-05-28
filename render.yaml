@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: afrishop-backend
+    env: node
+    region: frankfurt
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node dist/src/main.js
+    healthCheckPath: /api/auth/login
+    envVars:
+      - key: NODE_ENV
+        value: production
