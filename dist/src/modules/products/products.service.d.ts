@@ -2,14 +2,7 @@ import { PrismaService } from '../../config/prisma.service';
 export declare class ProductsService {
     private prisma;
     constructor(prisma: PrismaService);
-    findAll(query: {
-        page?: number;
-        limit?: number;
-        search?: string;
-        categoryId?: string;
-        featured?: boolean;
-        active?: boolean;
-    }): Promise<{
+    findAll(query?: any): Promise<{
         products: ({
             category: {
                 id: string;

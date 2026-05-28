@@ -5,23 +5,17 @@ import { PrismaService } from '../../config/prisma.service';
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: {
-    page?: number; limit?: number; search?: string;
-    categoryId?: string; featured?: boolean; active?: boolean;
-  }) {
-    const { page = 1, limit = 20, search, categoryId, featured, active } = query;
-    const skip = (page - 1) * limit;
+  async findAll(query: any = {}) {
+    const page  = Math.max(1, parseInt(query.page)  || 1);
+    const limit = Math.min(200, parseInt(query.limit) || 20);
+    const skip  = (page - 1) * limit;
+    const { search, categoryId } = query;
 
     const where: any = {};
-    if (search) where.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { nameEn: { contains: search, mode: 'insensitive' } },
-      { tags: { has: search } },
-    ];
+    if (search)     where.name = { contains: search, mode: 'insensitive' };
     if (categoryId) where.categoryId = categoryId;
-    if (featured !== undefined) where.isFeatured = featured;
-    if (active !== undefined) where.isActive = String(active) === 'true';
-    // Si active n'est pas spécifié ET pas de clé admin → seulement actifs
+    if (query.featured !== undefined) where.isFeatured = query.featured === 'true' || query.featured === true;
+    if (query.active !== undefined)   where.isActive   = query.active   === 'true' || query.active   === true;
 
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({
