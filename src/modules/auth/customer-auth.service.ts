@@ -39,6 +39,11 @@ export class CustomerAuthService {
         country: dto.country,
       },
     });
+    // Enregistrer l'acceptation des CGU et l'activité
+    await this.prisma.$queryRawUnsafe(
+      `UPDATE customers SET "termsAcceptedAt"=NOW(),"lastActivityAt"=NOW() WHERE id=$1`,
+      customer.id,
+    );
 
     const token = this.jwt.sign({
       sub: customer.id,
@@ -66,6 +71,11 @@ export class CustomerAuthService {
 
     const valid = await bcrypt.compare(dto.password, customer.password);
     if (!valid) throw new UnauthorizedException('Identifiants invalides');
+
+    // Mettre à jour lastActivityAt à chaque connexion
+    await this.prisma.$queryRawUnsafe(
+      `UPDATE customers SET "lastActivityAt"=NOW() WHERE id=$1`, customer.id,
+    );
 
     const token = this.jwt.sign({
       sub: customer.id,

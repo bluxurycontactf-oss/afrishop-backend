@@ -213,6 +213,58 @@ export class NotificationsService {
     `);
   }
 
+  // ── Avertissement inactivité ────────────────────────────────
+  async sendInactivityWarning(email: string, firstName: string, daysLeft: number) {
+    await this.send(email, `⚠️ Votre compte AfriShop sera supprimé dans ${daysLeft} jours`, `
+      ${BASE_STYLE}
+      <div class="container">
+        <div class="header" style="background:linear-gradient(135deg,#92400e,#b45309)">
+          <h1>⚠️ Compte inactif</h1>
+          <p>Action requise pour conserver votre compte</p>
+        </div>
+        <div class="body">
+          <p style="font-size:15px;color:#374151">Bonjour <strong>${firstName}</strong>,</p>
+          <p style="font-size:15px;color:#374151">Votre compte AfriShop n'a pas été utilisé depuis longtemps. Il sera <strong>supprimé dans ${daysLeft} jours</strong> conformément à nos conditions d'utilisation.</p>
+          <div class="info-box" style="border-left:4px solid #f59e0b;background:#fef3c7">
+            <p style="font-size:14px;color:#92400e;margin:0">⏰ <strong>Suppression prévue dans ${daysLeft} jours.</strong> Tout solde restant dans votre portefeuille sera classé comme perte et transféré à AfriShop.</p>
+          </div>
+          <p style="font-size:14px;color:#374151">Pour conserver votre compte, il vous suffit de vous connecter :</p>
+          <div style="text-align:center;margin:16px 0">
+            <a href="https://afrishop.web.app/account.html" class="btn">🔑 Se connecter maintenant</a>
+          </div>
+          <p style="font-size:13px;color:#6b7280">Si vous ne souhaitez pas conserver votre compte, aucune action n'est nécessaire.</p>
+        </div>
+        <div class="footer">AfriShop Boutique · <a href="https://afrishop.web.app/terms.html">Conditions d'utilisation</a></div>
+      </div>
+    `);
+  }
+
+  // ── Suppression de compte ────────────────────────────────────
+  async sendAccountDeletion(email: string, firstName: string, reason: string, hadBalance: boolean, lostAmount?: number) {
+    await this.send(email, `🗑️ Votre compte AfriShop a été supprimé — ${reason} d'inactivité`, `
+      ${BASE_STYLE}
+      <div class="container">
+        <div class="header" style="background:linear-gradient(135deg,#7f1d1d,#991b1b)">
+          <h1>🗑️ Compte supprimé</h1>
+          <p>Inactivité de ${reason}</p>
+        </div>
+        <div class="body">
+          <p style="font-size:15px;color:#374151">Bonjour <strong>${firstName}</strong>,</p>
+          <p style="font-size:15px;color:#374151">Votre compte AfriShop a été supprimé conformément à notre politique d'inactivité (${reason} sans activité).</p>
+          ${hadBalance && lostAmount ? `
+          <div class="info-box" style="border-left:4px solid #dc2626;background:#fef2f2">
+            <p style="font-size:14px;color:#991b1b;margin:0">⚠️ Un solde de <strong>${lostAmount.toLocaleString()} XOF</strong> était présent dans votre portefeuille. Ce montant a été classé comme perte conformément à nos conditions d'utilisation (article 3.2).</p>
+          </div>` : ''}
+          <p style="font-size:14px;color:#374151">Si vous souhaitez utiliser AfriShop à nouveau, vous pouvez créer un nouveau compte :</p>
+          <div style="text-align:center;margin:16px 0">
+            <a href="https://afrishop.web.app/account.html" class="btn">Créer un nouveau compte</a>
+          </div>
+        </div>
+        <div class="footer">AfriShop Boutique · <a href="https://afrishop.web.app/terms.html">Conditions d'utilisation</a></div>
+      </div>
+    `);
+  }
+
   // ── Message support ─────────────────────────────────────────
   async sendContactMessage(dto: { name: string; contact: string; message: string }) {
     const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;

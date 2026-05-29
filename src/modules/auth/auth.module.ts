@@ -6,16 +6,21 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { CustomerAuthService } from './customer-auth.service';
 import { CustomerJwtStrategy } from './customer-jwt.strategy';
+import { CleanupController } from './cleanup.controller';
+import { PrismaModule } from '../../config/prisma.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     PassportModule,
+    PrismaModule,
+    NotificationsModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'secret',
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, CleanupController],
   providers: [AuthService, JwtStrategy, CustomerAuthService, CustomerJwtStrategy],
   exports: [AuthService, CustomerAuthService],
 })

@@ -15,6 +15,8 @@ export declare class NotificationsService {
     }): Promise<void>;
     sendGiftCardFirstUse(email: string, code: string, remaining: number, expiresAt: Date): Promise<void>;
     sendGiftCardExpired(email: string, code: string, balance: number, walletTransferred: boolean): Promise<void>;
+    sendInactivityWarning(email: string, firstName: string, daysLeft: number): Promise<void>;
+    sendAccountDeletion(email: string, firstName: string, reason: string, hadBalance: boolean, lostAmount?: number): Promise<void>;
     sendContactMessage(dto: {
         name: string;
         contact: string;

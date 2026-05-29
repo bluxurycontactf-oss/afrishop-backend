@@ -15,6 +15,9 @@ const auth_service_1 = require("./auth.service");
 const jwt_strategy_1 = require("./jwt.strategy");
 const customer_auth_service_1 = require("./customer-auth.service");
 const customer_jwt_strategy_1 = require("./customer-jwt.strategy");
+const cleanup_controller_1 = require("./cleanup.controller");
+const prisma_module_1 = require("../../config/prisma.module");
+const notifications_module_1 = require("../notifications/notifications.module");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -22,12 +25,14 @@ exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
             passport_1.PassportModule,
+            prisma_module_1.PrismaModule,
+            notifications_module_1.NotificationsModule,
             jwt_1.JwtModule.register({
                 secret: process.env.JWT_SECRET || 'secret',
                 signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
             }),
         ],
-        controllers: [auth_controller_1.AuthController],
+        controllers: [auth_controller_1.AuthController, cleanup_controller_1.CleanupController],
         providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy, customer_auth_service_1.CustomerAuthService, customer_jwt_strategy_1.CustomerJwtStrategy],
         exports: [auth_service_1.AuthService, customer_auth_service_1.CustomerAuthService],
     })

@@ -36,10 +36,10 @@ export declare class PaymentsService {
             createdAt: Date;
             updatedAt: Date;
             country: string | null;
+            method: import(".prisma/client").$Enums.PaymentMethod;
             currency: string;
             status: import(".prisma/client").$Enums.PaymentStatus;
             orderId: string;
-            method: import(".prisma/client").$Enums.PaymentMethod;
             amount: import("@prisma/client/runtime/library").Decimal;
             transactionId: string | null;
             phoneNumber: string | null;
