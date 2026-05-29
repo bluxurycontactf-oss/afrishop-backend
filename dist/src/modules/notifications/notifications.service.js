@@ -44,6 +44,33 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
             this.logger.error(`Email error: ${e.message}`);
         }
     }
+    async sendContactMessage(dto) {
+        const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
+        try {
+            await this.transporter.sendMail({
+                from: `AfriShop Support <${process.env.SMTP_USER}>`,
+                to: adminEmail,
+                subject: `💬 Nouveau message de ${dto.name} — AfriShop Support`,
+                html: `
+          <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
+            <h2 style="color:#f97316">💬 Nouveau message client</h2>
+            <table style="width:100%;border-collapse:collapse">
+              <tr><td style="padding:8px;background:#f9fafb;font-weight:600">Nom</td><td style="padding:8px">${dto.name}</td></tr>
+              <tr><td style="padding:8px;background:#f9fafb;font-weight:600">Contact</td><td style="padding:8px">${dto.contact || '—'}</td></tr>
+              <tr><td style="padding:8px;background:#f9fafb;font-weight:600">Message</td><td style="padding:8px">${dto.message}</td></tr>
+              <tr><td style="padding:8px;background:#f9fafb;font-weight:600">Date</td><td style="padding:8px">${new Date().toLocaleString('fr-FR')}</td></tr>
+            </table>
+            <p style="margin-top:20px;color:#6b7280;font-size:13px">Ce message a été envoyé depuis le support de la boutique AfriShop.</p>
+          </div>
+        `,
+            });
+            this.logger.log(`Support email envoyé à ${adminEmail}`);
+        }
+        catch (e) {
+            this.logger.error(`Support email error: ${e.message}`);
+            throw e;
+        }
+    }
 };
 exports.NotificationsService = NotificationsService;
 exports.NotificationsService = NotificationsService = NotificationsService_1 = __decorate([
