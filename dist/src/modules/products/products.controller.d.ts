@@ -45,7 +45,7 @@ export declare class ProductsController {
         limit: number;
         pages: number;
     }>;
-    create(body: any, key: string): Promise<{
+    create(body: any): Promise<{
         images: {
             id: string;
             createdAt: Date;
@@ -265,7 +265,7 @@ export declare class ProductsController {
         categoryId: string | null;
         supplierId: string | null;
     }>;
-    update(id: string, body: any, key: string): Promise<{
+    update(id: string, body: any): Promise<{
         id: string;
         name: string;
         isActive: boolean;
@@ -293,7 +293,7 @@ export declare class ProductsController {
         categoryId: string | null;
         supplierId: string | null;
     }>;
-    delete(id: string, key: string): Promise<{
+    delete(id: string): Promise<{
         id: string;
         name: string;
         isActive: boolean;

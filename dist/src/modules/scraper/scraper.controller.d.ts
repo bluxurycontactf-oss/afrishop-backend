@@ -1,13 +1,12 @@
 import { ScraperService } from './scraper.service';
-declare class ImportProductDto {
-    url: string;
-    categoryId?: string;
-    markup?: number;
-}
 export declare class ScraperController {
     private scraper;
     constructor(scraper: ScraperService);
-    importProduct(dto: ImportProductDto): Promise<{
+    importProduct(dto: {
+        url: string;
+        categoryId?: string;
+        markup?: number;
+    }): Promise<{
         images: {
             id: string;
             createdAt: Date;
@@ -58,6 +57,5 @@ export declare class ScraperController {
     }>;
     previewProduct(dto: {
         url: string;
-    }, key: string): Promise<import("./scraper.service").AliexpressProduct>;
+    }): Promise<import("./scraper.service").AliexpressProduct>;
 }
-export {};

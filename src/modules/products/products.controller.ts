@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, Headers, UnauthorizedException } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
+import { AdminKeyGuard } from '../../common/guards/admin-key.guard';
 
 @ApiTags('Produits')
 @Controller('products')
@@ -15,10 +15,9 @@ export class ProductsController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Créer un produit manuellement' })
-  create(@Body() body: any, @Headers('x-admin-key') key: string) {
-    const ADMIN_KEY = process.env.ADMIN_API_KEY || 'afrishop-admin-2024';
-    if (key !== ADMIN_KEY) throw new UnauthorizedException('Clé admin invalide');
+  @UseGuards(AdminKeyGuard)
+  @ApiOperation({ summary: 'Créer un produit' })
+  create(@Body() body: any) {
     return this.products.create(body);
   }
 
@@ -38,18 +37,16 @@ export class ProductsController {
   }
 
   @Put(':id')
+  @UseGuards(AdminKeyGuard)
   @ApiOperation({ summary: 'Mettre à jour un produit' })
-  update(@Param('id') id: string, @Body() body: any, @Headers('x-admin-key') key: string) {
-    const ADMIN_KEY = process.env.ADMIN_API_KEY || 'afrishop-admin-2024';
-    if (key !== ADMIN_KEY) throw new UnauthorizedException('Clé admin invalide');
+  update(@Param('id') id: string, @Body() body: any) {
     return this.products.update(id, body);
   }
 
   @Delete(':id')
+  @UseGuards(AdminKeyGuard)
   @ApiOperation({ summary: 'Supprimer un produit' })
-  delete(@Param('id') id: string, @Headers('x-admin-key') key: string) {
-    const ADMIN_KEY = process.env.ADMIN_API_KEY || 'afrishop-admin-2024';
-    if (key !== ADMIN_KEY) throw new UnauthorizedException('Clé admin invalide');
+  delete(@Param('id') id: string) {
     return this.products.delete(id);
   }
 }

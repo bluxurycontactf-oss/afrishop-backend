@@ -16,6 +16,7 @@ exports.ProductsController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const products_service_1 = require("./products.service");
+const admin_key_guard_1 = require("../../common/guards/admin-key.guard");
 let ProductsController = class ProductsController {
     constructor(products) {
         this.products = products;
@@ -23,10 +24,7 @@ let ProductsController = class ProductsController {
     findAll(query) {
         return this.products.findAll(query);
     }
-    create(body, key) {
-        const ADMIN_KEY = process.env.ADMIN_API_KEY || 'afrishop-admin-2024';
-        if (key !== ADMIN_KEY)
-            throw new common_1.UnauthorizedException('Clé admin invalide');
+    create(body) {
         return this.products.create(body);
     }
     getFeatured(limit) {
@@ -38,16 +36,10 @@ let ProductsController = class ProductsController {
     findBySlug(slug) {
         return this.products.findBySlug(slug);
     }
-    update(id, body, key) {
-        const ADMIN_KEY = process.env.ADMIN_API_KEY || 'afrishop-admin-2024';
-        if (key !== ADMIN_KEY)
-            throw new common_1.UnauthorizedException('Clé admin invalide');
+    update(id, body) {
         return this.products.update(id, body);
     }
-    delete(id, key) {
-        const ADMIN_KEY = process.env.ADMIN_API_KEY || 'afrishop-admin-2024';
-        if (key !== ADMIN_KEY)
-            throw new common_1.UnauthorizedException('Clé admin invalide');
+    delete(id) {
         return this.products.delete(id);
     }
 };
@@ -62,11 +54,11 @@ __decorate([
 ], ProductsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Créer un produit manuellement' }),
+    (0, common_1.UseGuards)(admin_key_guard_1.AdminKeyGuard),
+    (0, swagger_1.ApiOperation)({ summary: 'Créer un produit' }),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Headers)('x-admin-key')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "create", null);
 __decorate([
@@ -92,21 +84,21 @@ __decorate([
 ], ProductsController.prototype, "findBySlug", null);
 __decorate([
     (0, common_1.Put)(':id'),
+    (0, common_1.UseGuards)(admin_key_guard_1.AdminKeyGuard),
     (0, swagger_1.ApiOperation)({ summary: 'Mettre à jour un produit' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
-    __param(2, (0, common_1.Headers)('x-admin-key')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
+    (0, common_1.UseGuards)(admin_key_guard_1.AdminKeyGuard),
     (0, swagger_1.ApiOperation)({ summary: 'Supprimer un produit' }),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Headers)('x-admin-key')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "delete", null);
 exports.ProductsController = ProductsController = __decorate([
