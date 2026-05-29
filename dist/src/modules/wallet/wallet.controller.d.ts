@@ -32,4 +32,38 @@ export declare class WalletController {
         remainingBalance: number;
         message: string;
     }>;
+    getFee(amount: string): {
+        amount: number;
+        fee: number;
+        net: number;
+        feePercent: string;
+    };
+    withdraw(dto: {
+        phone: string;
+        amount: number;
+        operator: string;
+        momoNumber: string;
+    }): Promise<{
+        success: boolean;
+        withdrawalId: any;
+        amount: number;
+        fee: number;
+        netAmount: number;
+        operator: string;
+        momoNumber: string;
+        newBalance: number;
+        message: string;
+    }>;
+    listWithdrawals(): Promise<unknown>;
+    processWithdrawal(id: string, dto: {
+        note?: string;
+    }): Promise<{
+        success: boolean;
+    }>;
+    rejectWithdrawal(id: string, dto: {
+        note?: string;
+    }): Promise<{
+        success: boolean;
+        refunded: number;
+    }>;
 }
