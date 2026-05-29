@@ -42,8 +42,11 @@ export class AuthService {
 
   async getAdminToken(password: string) {
     const { UnauthorizedException } = await import('@nestjs/common');
-    const adminPw = process.env.ADMIN_PASSWORD;
-    if (!adminPw || password !== adminPw) {
+    // Accepte ADMIN_PANEL_PASSWORD (mot de passe panel admin) OU ADMIN_PASSWORD (compte backend)
+    const validPw1 = process.env.ADMIN_PANEL_PASSWORD;
+    const validPw2 = process.env.ADMIN_PASSWORD;
+    const validPw3 = process.env.ADMIN_API_KEY;
+    if (password !== validPw1 && password !== validPw2 && password !== validPw3) {
       throw new UnauthorizedException('Mot de passe incorrect');
     }
     // JWT avec rôle admin, expire dans 12h

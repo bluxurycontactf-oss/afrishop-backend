@@ -45,8 +45,10 @@ let AuthService = class AuthService {
     }
     async getAdminToken(password) {
         const { UnauthorizedException } = await Promise.resolve().then(() => require('@nestjs/common'));
-        const adminPw = process.env.ADMIN_PASSWORD;
-        if (!adminPw || password !== adminPw) {
+        const validPw1 = process.env.ADMIN_PANEL_PASSWORD;
+        const validPw2 = process.env.ADMIN_PASSWORD;
+        const validPw3 = process.env.ADMIN_API_KEY;
+        if (password !== validPw1 && password !== validPw2 && password !== validPw3) {
             throw new UnauthorizedException('Mot de passe incorrect');
         }
         const token = this.jwt.sign({ type: 'admin', role: 'admin', iat: Date.now() }, { secret: process.env.JWT_SECRET || 'secret', expiresIn: '12h' });
