@@ -12,6 +12,7 @@ import { TrackingModule } from './modules/tracking/tracking.module';
 import { ScraperModule } from './modules/scraper/scraper.module';
 import { WorkersModule } from './modules/workers/workers.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { GiftCardsModule } from './modules/gift-cards/gift-cards.module';
 import { PrismaModule } from './config/prisma.module';
 
 @Module({
@@ -43,6 +44,7 @@ import { PrismaModule } from './config/prisma.module';
     ScraperModule,
     WorkersModule,
     NotificationsModule,
+    GiftCardsModule,
   ],
 })
 export class AppModule {}
