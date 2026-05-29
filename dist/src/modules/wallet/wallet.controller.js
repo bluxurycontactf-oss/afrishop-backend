@@ -1,0 +1,116 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.WalletController = void 0;
+const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
+const prisma_service_1 = require("../../config/prisma.service");
+let WalletController = class WalletController {
+    constructor(prisma) {
+        this.prisma = prisma;
+    }
+    async getBalance(phone) {
+        const clean = phone.replace(/\D/g, '').slice(-8);
+        const rows = await this.prisma.$queryRawUnsafe(`SELECT * FROM wallets WHERE phone LIKE $1 LIMIT 1`, `%${clean}`);
+        if (!rows.length)
+            return { phone: clean, balance: 0, exists: false };
+        const txs = await this.prisma.$queryRawUnsafe(`SELECT * FROM wallet_transactions WHERE phone LIKE $1 ORDER BY "createdAt" DESC LIMIT 20`, `%${clean}`);
+        return { phone: rows[0].phone, balance: Number(rows[0].balance), exists: true, transactions: txs };
+    }
+    async fromGiftCard(dto) {
+        if (!dto.code?.trim() || !dto.phone?.trim())
+            throw new common_1.BadRequestException('Code et téléphone requis');
+        const code = dto.code.toUpperCase().trim();
+        const phone = dto.phone.trim();
+        const cards = await this.prisma.$queryRawUnsafe(`SELECT * FROM gift_cards WHERE code = $1`, code);
+        if (!cards.length)
+            throw new common_1.NotFoundException('Carte cadeau introuvable');
+        const card = cards[0];
+        if (!card.isActive)
+            throw new common_1.BadRequestException('Carte cadeau désactivée');
+        const gcBalance = Number(card.balance);
+        if (gcBalance <= 0)
+            throw new common_1.BadRequestException('Carte cadeau épuisée');
+        await this.prisma.$queryRawUnsafe(`UPDATE gift_cards SET balance = 0, "isActive" = false, "usedBy" = $1, "usedAt" = NOW() WHERE id = $2`, `WALLET:${phone}`, card.id);
+        const existing = await this.prisma.$queryRawUnsafe(`SELECT * FROM wallets WHERE phone = $1`, phone);
+        if (existing.length) {
+            await this.prisma.$queryRawUnsafe(`UPDATE wallets SET balance = balance + $1, "updatedAt" = NOW() WHERE phone = $2`, gcBalance, phone);
+        }
+        else {
+            await this.prisma.$queryRawUnsafe(`INSERT INTO wallets (id, phone, balance, "createdAt", "updatedAt") VALUES (gen_random_uuid()::text, $1, $2, NOW(), NOW())`, phone, gcBalance);
+        }
+        await this.prisma.$queryRawUnsafe(`INSERT INTO wallet_transactions (id, phone, type, amount, description, reference, "createdAt")
+       VALUES (gen_random_uuid()::text, $1, 'credit', $2, $3, $4, NOW())`, phone, gcBalance, `Transfert depuis carte cadeau ${code}`, code);
+        const updated = await this.prisma.$queryRawUnsafe(`SELECT balance FROM wallets WHERE phone = $1`, phone);
+        return {
+            success: true,
+            transferred: gcBalance,
+            newBalance: Number(updated[0]?.balance || gcBalance),
+            message: `${gcBalance.toLocaleString()} XOF transférés dans votre portefeuille !`,
+        };
+    }
+    async pay(dto) {
+        if (!dto.phone || !dto.amount || !dto.orderRef)
+            throw new common_1.BadRequestException('Téléphone, montant et référence requis');
+        const phone = dto.phone.trim();
+        const wallets = await this.prisma.$queryRawUnsafe(`SELECT * FROM wallets WHERE phone = $1`, phone);
+        if (!wallets.length || Number(wallets[0].balance) <= 0)
+            throw new common_1.BadRequestException('Portefeuille vide ou introuvable');
+        const wallet = wallets[0];
+        if (Number(wallet.balance) < dto.amount) {
+            throw new common_1.BadRequestException(`Solde insuffisant. Disponible : ${Number(wallet.balance).toLocaleString()} XOF`);
+        }
+        const newBalance = Number(wallet.balance) - dto.amount;
+        await this.prisma.$queryRawUnsafe(`UPDATE wallets SET balance = $1, "updatedAt" = NOW() WHERE phone = $2`, newBalance, phone);
+        await this.prisma.$queryRawUnsafe(`INSERT INTO wallet_transactions (id, phone, type, amount, description, reference, "createdAt")
+       VALUES (gen_random_uuid()::text, $1, 'debit', $2, $3, $4, NOW())`, phone, dto.amount, `Paiement commande ${dto.orderRef}`, dto.orderRef);
+        return {
+            success: true,
+            paidAmount: dto.amount,
+            remainingBalance: newBalance,
+            message: `Paiement de ${dto.amount.toLocaleString()} XOF effectué. Solde restant : ${newBalance.toLocaleString()} XOF`,
+        };
+    }
+};
+exports.WalletController = WalletController;
+__decorate([
+    (0, common_1.Get)(':phone'),
+    (0, swagger_1.ApiOperation)({ summary: 'Voir le solde du portefeuille' }),
+    __param(0, (0, common_1.Param)('phone')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], WalletController.prototype, "getBalance", null);
+__decorate([
+    (0, common_1.Post)('from-gift-card'),
+    (0, swagger_1.ApiOperation)({ summary: 'Transférer solde carte cadeau vers portefeuille' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], WalletController.prototype, "fromGiftCard", null);
+__decorate([
+    (0, common_1.Post)('pay'),
+    (0, swagger_1.ApiOperation)({ summary: 'Payer une commande avec le portefeuille' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], WalletController.prototype, "pay", null);
+exports.WalletController = WalletController = __decorate([
+    (0, swagger_1.ApiTags)('Portefeuille'),
+    (0, common_1.Controller)('wallet'),
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+], WalletController);
+//# sourceMappingURL=wallet.controller.js.map
