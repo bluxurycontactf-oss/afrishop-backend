@@ -28,6 +28,22 @@ let GiftCardsController = class GiftCardsController {
         this.prisma = prisma;
         this.notifications = notifications;
     }
+    async purchase(dto) {
+        if (!dto.amount || dto.amount < 2000)
+            throw new common_1.BadRequestException('Montant minimum : 2000 XOF');
+        if (!dto.email?.trim())
+            throw new common_1.BadRequestException('Email requis');
+        if (!dto.transactionId)
+            throw new common_1.BadRequestException('Transaction FedaPay requise');
+        let code = generateCode();
+        const existing = await this.prisma.$queryRawUnsafe(`SELECT id FROM gift_cards WHERE code = $1`, code);
+        if (existing.length)
+            code = generateCode();
+        await this.prisma.$queryRawUnsafe(`INSERT INTO gift_cards (id, code, amount, balance, "isActive", note, "createdAt")
+       VALUES (gen_random_uuid()::text, $1, $2, $3, true, $4, NOW())`, code, dto.amount, dto.amount, `Acheté par ${dto.email} — Tx: ${dto.transactionId}`);
+        this.notifications.sendGiftCard(dto.email, code, dto.amount, dto.message).catch(() => { });
+        return { success: true, code, amount: dto.amount, email: dto.email };
+    }
     async check(code) {
         const cards = await this.prisma.$queryRawUnsafe(`SELECT id, code, amount, balance, "isActive", "createdAt" FROM gift_cards WHERE code = $1`, code.toUpperCase().trim());
         if (!cards.length)
@@ -101,6 +117,14 @@ let GiftCardsController = class GiftCardsController {
     }
 };
 exports.GiftCardsController = GiftCardsController;
+__decorate([
+    (0, common_1.Post)('purchase'),
+    (0, swagger_1.ApiOperation)({ summary: 'Acheter une carte cadeau après paiement FedaPay' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], GiftCardsController.prototype, "purchase", null);
 __decorate([
     (0, common_1.Get)('check/:code'),
     (0, swagger_1.ApiOperation)({ summary: 'Vérifier le solde d\'une carte cadeau' }),

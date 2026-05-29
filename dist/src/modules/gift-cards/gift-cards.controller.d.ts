@@ -4,6 +4,17 @@ export declare class GiftCardsController {
     private prisma;
     private notifications;
     constructor(prisma: PrismaService, notifications: NotificationsService);
+    purchase(dto: {
+        amount: number;
+        email: string;
+        transactionId: string;
+        message?: string;
+    }): Promise<{
+        success: boolean;
+        code: string;
+        amount: number;
+        email: string;
+    }>;
     check(code: string): Promise<{
         code: any;
         amount: number;

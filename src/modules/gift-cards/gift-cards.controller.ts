@@ -18,6 +18,32 @@ export class GiftCardsController {
     private notifications: NotificationsService,
   ) {}
 
+  /* ── PUBLIC : Acheter une carte cadeau ── */
+  @Post('purchase')
+  @ApiOperation({ summary: 'Acheter une carte cadeau après paiement FedaPay' })
+  async purchase(@Body() dto: { amount: number; email: string; transactionId: string; message?: string }) {
+    if (!dto.amount || dto.amount < 2000) throw new BadRequestException('Montant minimum : 2000 XOF');
+    if (!dto.email?.trim()) throw new BadRequestException('Email requis');
+    if (!dto.transactionId) throw new BadRequestException('Transaction FedaPay requise');
+
+    // Générer un code unique
+    let code = generateCode();
+    const existing: any[] = await this.prisma.$queryRawUnsafe(`SELECT id FROM gift_cards WHERE code = $1`, code);
+    if (existing.length) code = generateCode();
+
+    await this.prisma.$queryRawUnsafe(
+      `INSERT INTO gift_cards (id, code, amount, balance, "isActive", note, "createdAt")
+       VALUES (gen_random_uuid()::text, $1, $2, $3, true, $4, NOW())`,
+      code, dto.amount, dto.amount,
+      `Acheté par ${dto.email} — Tx: ${dto.transactionId}`,
+    );
+
+    // Envoyer le code par email automatiquement
+    this.notifications.sendGiftCard(dto.email, code, dto.amount, dto.message).catch(() => {});
+
+    return { success: true, code, amount: dto.amount, email: dto.email };
+  }
+
   /* ── PUBLIC : Vérifier une carte ── */
   @Get('check/:code')
   @ApiOperation({ summary: 'Vérifier le solde d\'une carte cadeau' })
