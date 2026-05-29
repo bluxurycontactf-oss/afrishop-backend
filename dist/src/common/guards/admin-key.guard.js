@@ -8,14 +8,26 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminKeyGuard = void 0;
 const common_1 = require("@nestjs/common");
+const jwt = require("jsonwebtoken");
 let AdminKeyGuard = class AdminKeyGuard {
     canActivate(context) {
         const req = context.switchToHttp().getRequest();
+        const secret = process.env.JWT_SECRET || 'secret';
+        const authHeader = req.headers['authorization'] || '';
+        if (authHeader.startsWith('Bearer ')) {
+            const token = authHeader.slice(7);
+            try {
+                const payload = jwt.verify(token, secret);
+                if (payload.role === 'admin' || payload.type === 'admin')
+                    return true;
+            }
+            catch { }
+        }
         const key = req.headers['x-admin-key'];
-        const ADMIN_KEY = process.env.ADMIN_API_KEY || 'afrishop-admin-2024';
-        if (key !== ADMIN_KEY)
-            throw new common_1.UnauthorizedException('Clé admin invalide');
-        return true;
+        const ADMIN_KEY = process.env.ADMIN_API_KEY;
+        if (ADMIN_KEY && key === ADMIN_KEY)
+            return true;
+        throw new common_1.UnauthorizedException('Accès non autorisé');
     }
 };
 exports.AdminKeyGuard = AdminKeyGuard;

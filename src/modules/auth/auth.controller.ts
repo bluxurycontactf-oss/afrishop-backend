@@ -28,6 +28,13 @@ export class AuthController {
     return this.auth.login(dto);
   }
 
+  @Post('admin-token')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Obtenir un token admin sécurisé' })
+  adminToken(@Body() body: { password: string }) {
+    return this.auth.getAdminToken(body.password);
+  }
+
   /* ── CLIENT ── */
   @Post('customer/register')
   @ApiOperation({ summary: 'Créer un compte client' })

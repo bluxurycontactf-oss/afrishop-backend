@@ -31,6 +31,9 @@ let AuthController = class AuthController {
     login(dto) {
         return this.auth.login(dto);
     }
+    adminToken(body) {
+        return this.auth.getAdminToken(body.password);
+    }
     customerRegister(dto) {
         return this.customerAuth.register(dto);
     }
@@ -64,6 +67,15 @@ __decorate([
     __metadata("design:paramtypes", [login_dto_1.LoginDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.Post)('admin-token'),
+    (0, common_1.HttpCode)(200),
+    (0, swagger_1.ApiOperation)({ summary: 'Obtenir un token admin sécurisé' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "adminToken", null);
 __decorate([
     (0, common_1.Post)('customer/register'),
     (0, swagger_1.ApiOperation)({ summary: 'Créer un compte client' }),

@@ -43,6 +43,15 @@ let AuthService = class AuthService {
     async validateUser(userId) {
         return this.prisma.user.findUnique({ where: { id: userId } });
     }
+    async getAdminToken(password) {
+        const { UnauthorizedException } = await Promise.resolve().then(() => require('@nestjs/common'));
+        const adminPw = process.env.ADMIN_PASSWORD;
+        if (!adminPw || password !== adminPw) {
+            throw new UnauthorizedException('Mot de passe incorrect');
+        }
+        const token = this.jwt.sign({ type: 'admin', role: 'admin', iat: Date.now() }, { secret: process.env.JWT_SECRET || 'secret', expiresIn: '12h' });
+        return { token, expiresIn: '12h' };
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([

@@ -24,6 +24,12 @@ export declare class AuthController {
             role: import(".prisma/client").$Enums.Role;
         };
     }>;
+    adminToken(body: {
+        password: string;
+    }): Promise<{
+        token: string;
+        expiresIn: string;
+    }>;
     customerRegister(dto: any): Promise<{
         token: string;
         customer: {

@@ -39,4 +39,18 @@ export class AuthService {
   async validateUser(userId: string) {
     return this.prisma.user.findUnique({ where: { id: userId } });
   }
+
+  async getAdminToken(password: string) {
+    const { UnauthorizedException } = await import('@nestjs/common');
+    const adminPw = process.env.ADMIN_PASSWORD;
+    if (!adminPw || password !== adminPw) {
+      throw new UnauthorizedException('Mot de passe incorrect');
+    }
+    // JWT avec rôle admin, expire dans 12h
+    const token = this.jwt.sign(
+      { type: 'admin', role: 'admin', iat: Date.now() },
+      { secret: process.env.JWT_SECRET || 'secret', expiresIn: '12h' },
+    );
+    return { token, expiresIn: '12h' };
+  }
 }

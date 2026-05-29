@@ -34,4 +34,8 @@ export declare class AuthService {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    getAdminToken(password: string): Promise<{
+        token: string;
+        expiresIn: string;
+    }>;
 }
