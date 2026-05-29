@@ -30,7 +30,7 @@ export class NotificationsService {
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   });
 
-  private from = () => `AfriShop <${process.env.SMTP_USER}>`;
+  private from = () => `AfriShop Boutique <${process.env.SMTP_USER}>`;
 
   private async send(to: string, subject: string, html: string) {
     try {

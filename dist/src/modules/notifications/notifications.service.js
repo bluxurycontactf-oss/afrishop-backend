@@ -37,7 +37,7 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
             secure: false,
             auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
         });
-        this.from = () => `AfriShop <${process.env.SMTP_USER}>`;
+        this.from = () => `AfriShop Boutique <${process.env.SMTP_USER}>`;
     }
     async send(to, subject, html) {
         try {
