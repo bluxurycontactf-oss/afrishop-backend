@@ -39,66 +39,116 @@ let GiftCardsController = class GiftCardsController {
         const existing = await this.prisma.$queryRawUnsafe(`SELECT id FROM gift_cards WHERE code = $1`, code);
         if (existing.length)
             code = generateCode();
-        await this.prisma.$queryRawUnsafe(`INSERT INTO gift_cards (id, code, amount, balance, "isActive", note, "createdAt")
-       VALUES (gen_random_uuid()::text, $1, $2, $3, true, $4, NOW())`, code, dto.amount, dto.amount, `Acheté par ${dto.email} — Tx: ${dto.transactionId}`);
+        await this.prisma.$queryRawUnsafe(`INSERT INTO gift_cards (id, code, amount, balance, "isActive", note, "ownerEmail", "createdAt")
+       VALUES (gen_random_uuid()::text, $1, $2, $3, true, $4, $5, NOW())`, code, dto.amount, dto.amount, `Acheté par ${dto.email} — Tx: ${dto.transactionId}`, dto.email);
         this.notifications.sendGiftCard(dto.email, code, dto.amount, dto.message).catch(() => { });
         return { success: true, code, amount: dto.amount, email: dto.email };
     }
     async check(code) {
-        const cards = await this.prisma.$queryRawUnsafe(`SELECT id, code, amount, balance, "isActive", "createdAt" FROM gift_cards WHERE code = $1`, code.toUpperCase().trim());
+        const cards = await this.prisma.$queryRawUnsafe(`SELECT id, code, amount, balance, "isActive", "firstUsedAt", "expiresAt", "createdAt" FROM gift_cards WHERE code = $1`, code.toUpperCase().trim());
         if (!cards.length)
             throw new common_1.NotFoundException('Carte cadeau introuvable');
         const card = cards[0];
         if (!card.isActive)
-            throw new common_1.BadRequestException('Cette carte cadeau est désactivée');
+            throw new common_1.BadRequestException('Cette carte cadeau est désactivée ou expirée');
         if (Number(card.balance) <= 0)
             throw new common_1.BadRequestException('Cette carte cadeau est épuisée');
+        const now = new Date();
+        const expiresAt = card.expiresAt ? new Date(card.expiresAt) : null;
+        if (expiresAt && expiresAt < now) {
+            throw new common_1.BadRequestException('Cette carte cadeau a expiré (14 jours après première utilisation)');
+        }
+        const daysLeft = expiresAt ? Math.ceil((expiresAt.getTime() - now.getTime()) / 86400000) : null;
         return {
             code: card.code,
             amount: Number(card.amount),
             balance: Number(card.balance),
             isActive: card.isActive,
+            firstUsedAt: card.firstUsedAt || null,
+            expiresAt: card.expiresAt || null,
+            daysLeft,
+            message: card.firstUsedAt
+                ? `Valable encore ${daysLeft} jour(s) (expire le ${new Date(card.expiresAt).toLocaleDateString('fr-FR')})`
+                : 'Pas encore utilisée — expire 14 jours après la première utilisation',
         };
     }
     async redeem(dto) {
-        if (!dto.code || !dto.amount || !dto.orderRef) {
-            throw new common_1.BadRequestException('Code, montant et référence commande requis');
-        }
+        if (!dto.code || !dto.amount || !dto.orderRef)
+            throw new common_1.BadRequestException('Code, montant et référence requis');
         const code = dto.code.toUpperCase().trim();
-        const cards = await this.prisma.$queryRawUnsafe(`SELECT id, code, amount, balance, "isActive" FROM gift_cards WHERE code = $1`, code);
+        const cards = await this.prisma.$queryRawUnsafe(`SELECT * FROM gift_cards WHERE code = $1`, code);
         if (!cards.length)
             throw new common_1.NotFoundException('Carte cadeau introuvable');
         const card = cards[0];
         if (!card.isActive)
-            throw new common_1.BadRequestException('Carte cadeau désactivée');
+            throw new common_1.BadRequestException('Carte cadeau désactivée ou expirée');
         if (Number(card.balance) < dto.amount)
-            throw new common_1.BadRequestException(`Solde insuffisant. Solde disponible : ${card.balance} XOF`);
+            throw new common_1.BadRequestException(`Solde insuffisant. Disponible : ${Number(card.balance).toLocaleString()} XOF`);
+        const now = new Date();
+        if (card.expiresAt && new Date(card.expiresAt) < now) {
+            throw new common_1.BadRequestException('Carte cadeau expirée');
+        }
+        const isFirstUse = !card.firstUsedAt;
+        const expiresAt = isFirstUse ? new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000) : null;
         const newBalance = Number(card.balance) - dto.amount;
-        await this.prisma.$queryRawUnsafe(`UPDATE gift_cards SET balance = $1, "usedBy" = $2, "usedAt" = NOW(), "isActive" = $3 WHERE id = $4`, newBalance, dto.orderRef, newBalance > 0, card.id);
+        if (isFirstUse) {
+            const ownerPhone = dto.ownerPhone || card.ownerPhone || null;
+            const ownerEmail = dto.ownerEmail || card.ownerEmail || null;
+            await this.prisma.$queryRawUnsafe(`UPDATE gift_cards SET balance=$1,"usedBy"=$2,"usedAt"=NOW(),"isActive"=$3,"firstUsedAt"=NOW(),"expiresAt"=$4,"ownerPhone"=COALESCE($5,"ownerPhone"),"ownerEmail"=COALESCE($6,"ownerEmail") WHERE id=$7`, newBalance, dto.orderRef, newBalance > 0, expiresAt, ownerPhone, ownerEmail, card.id);
+            const notifEmail = ownerEmail || card.ownerEmail;
+            if (notifEmail) {
+                this.notifications.sendGiftCardFirstUse(notifEmail, code, newBalance, expiresAt).catch(() => { });
+            }
+        }
+        else {
+            await this.prisma.$queryRawUnsafe(`UPDATE gift_cards SET balance=$1,"usedBy"=$2,"usedAt"=NOW(),"isActive"=$3 WHERE id=$4`, newBalance, dto.orderRef, newBalance > 0, card.id);
+        }
         return {
             success: true,
             usedAmount: dto.amount,
             remainingBalance: newBalance,
-            message: `Paiement de ${dto.amount.toLocaleString()} XOF effectué. Solde restant : ${newBalance.toLocaleString()} XOF`,
+            expiresAt: isFirstUse ? expiresAt : card.expiresAt,
+            message: isFirstUse && newBalance > 0
+                ? `Paiement de ${dto.amount.toLocaleString()} XOF effectué. Solde restant : ${newBalance.toLocaleString()} XOF — valable 14 jours.`
+                : `Paiement de ${dto.amount.toLocaleString()} XOF effectué. Solde restant : ${newBalance.toLocaleString()} XOF`,
         };
     }
-    async generate(dto) {
-        if (!dto.amount || dto.amount < 2000) {
-            throw new common_1.BadRequestException('Montant minimum : 2000 XOF');
+    async processExpired() {
+        const expired = await this.prisma.$queryRawUnsafe(`SELECT * FROM gift_cards WHERE "expiresAt" < NOW() AND balance > 0 AND "isActive" = true`);
+        let processed = 0;
+        for (const card of expired) {
+            const balance = Number(card.balance);
+            const phone = card.ownerPhone;
+            const email = card.ownerEmail;
+            await this.prisma.$queryRawUnsafe(`UPDATE gift_cards SET balance=0,"isActive"=false WHERE id=$1`, card.id);
+            if (phone && balance > 0) {
+                const wallets = await this.prisma.$queryRawUnsafe(`SELECT * FROM wallets WHERE phone=$1`, phone);
+                if (wallets.length) {
+                    await this.prisma.$queryRawUnsafe(`UPDATE wallets SET balance=balance+$1,"updatedAt"=NOW() WHERE phone=$2`, balance, phone);
+                }
+                else {
+                    await this.prisma.$queryRawUnsafe(`INSERT INTO wallets (id,phone,balance,"createdAt","updatedAt") VALUES (gen_random_uuid()::text,$1,$2,NOW(),NOW())`, phone, balance);
+                }
+                await this.prisma.$queryRawUnsafe(`INSERT INTO wallet_transactions (id,phone,type,amount,description,reference,"createdAt") VALUES (gen_random_uuid()::text,$1,'credit',$2,$3,$4,NOW())`, phone, balance, `Expiration carte cadeau ${card.code} — solde reversé`, card.code);
+            }
+            if (email) {
+                this.notifications.sendGiftCardExpired(email, card.code, balance, !!phone).catch(() => { });
+            }
+            processed++;
         }
+        return { success: true, processed, message: `${processed} carte(s) expirée(s) traitée(s)` };
+    }
+    async generate(dto) {
+        if (!dto.amount || dto.amount < 2000)
+            throw new common_1.BadRequestException('Montant minimum : 2000 XOF');
         const qty = Math.min(dto.quantity || 1, 50);
         const cards = [];
         for (let i = 0; i < qty; i++) {
             let code = generateCode();
-            const existing = await this.prisma.$queryRawUnsafe(`SELECT id FROM gift_cards WHERE code = $1`, code);
-            while (existing.length) {
+            const existing = await this.prisma.$queryRawUnsafe(`SELECT id FROM gift_cards WHERE code=$1`, code);
+            if (existing.length)
                 code = generateCode();
-                const check = await this.prisma.$queryRawUnsafe(`SELECT id FROM gift_cards WHERE code = $1`, code);
-                if (!check.length)
-                    break;
-            }
-            await this.prisma.$queryRawUnsafe(`INSERT INTO gift_cards (id, code, amount, balance, "isActive", note, "createdAt")
-         VALUES (gen_random_uuid()::text, $1, $2, $3, true, $4, NOW())`, code, dto.amount, dto.amount, dto.note || null);
+            await this.prisma.$queryRawUnsafe(`INSERT INTO gift_cards (id,code,amount,balance,"isActive",note,"ownerEmail","createdAt") VALUES (gen_random_uuid()::text,$1,$2,$3,true,$4,$5,NOW())`, code, dto.amount, dto.amount, dto.note || null, dto.recipientEmail || null);
             cards.push({ code, amount: dto.amount, balance: dto.amount });
             if (dto.recipientEmail) {
                 this.notifications.sendGiftCard(dto.recipientEmail, code, dto.amount, dto.note).catch(() => { });
@@ -107,12 +157,11 @@ let GiftCardsController = class GiftCardsController {
         return { success: true, cards, emailSent: !!dto.recipientEmail };
     }
     async findAll() {
-        const cards = await this.prisma.$queryRawUnsafe(`SELECT *, CAST(amount AS FLOAT) as amount, CAST(balance AS FLOAT) as balance
-       FROM gift_cards ORDER BY "createdAt" DESC LIMIT 200`);
+        const cards = await this.prisma.$queryRawUnsafe(`SELECT *,CAST(amount AS FLOAT) as amount,CAST(balance AS FLOAT) as balance FROM gift_cards ORDER BY "createdAt" DESC LIMIT 200`);
         return cards;
     }
     async deactivate(id) {
-        await this.prisma.$queryRawUnsafe(`UPDATE gift_cards SET "isActive" = false WHERE id = $1`, id);
+        await this.prisma.$queryRawUnsafe(`UPDATE gift_cards SET "isActive"=false WHERE id=$1`, id);
         return { success: true };
     }
 };
@@ -141,6 +190,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], GiftCardsController.prototype, "redeem", null);
+__decorate([
+    (0, common_1.Post)('process-expired'),
+    (0, swagger_1.ApiOperation)({ summary: 'Traiter les cartes expirées — reverser solde vers wallet' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], GiftCardsController.prototype, "processExpired", null);
 __decorate([
     (0, common_1.Post)('generate'),
     (0, common_1.UseGuards)(admin_key_guard_1.AdminKeyGuard),

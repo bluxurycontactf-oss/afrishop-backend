@@ -20,15 +20,27 @@ export declare class GiftCardsController {
         amount: number;
         balance: number;
         isActive: any;
+        firstUsedAt: any;
+        expiresAt: any;
+        daysLeft: number;
+        message: string;
     }>;
     redeem(dto: {
         code: string;
         amount: number;
         orderRef: string;
+        ownerPhone?: string;
+        ownerEmail?: string;
     }): Promise<{
         success: boolean;
         usedAmount: number;
         remainingBalance: number;
+        expiresAt: any;
+        message: string;
+    }>;
+    processExpired(): Promise<{
+        success: boolean;
+        processed: number;
         message: string;
     }>;
     generate(dto: {

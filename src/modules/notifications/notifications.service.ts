@@ -155,6 +155,64 @@ export class NotificationsService {
     `);
   }
 
+  // ── Première utilisation carte cadeau ──────────────────────
+  async sendGiftCardFirstUse(email: string, code: string, remaining: number, expiresAt: Date) {
+    const expStr = expiresAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+    await this.send(email, `⏰ Votre carte cadeau expire le ${expStr} — AfriShop`, `
+      ${BASE_STYLE}
+      <div class="container">
+        <div class="header" style="background:linear-gradient(135deg,#92400e,#b45309)">
+          <h1>⏰ Rappel important</h1>
+          <p>Votre carte cadeau a été utilisée</p>
+        </div>
+        <div class="body">
+          <p style="font-size:15px;color:#374151">Vous avez utilisé votre carte cadeau pour la première fois. Il vous reste <strong>${remaining.toLocaleString()} XOF</strong> à utiliser.</p>
+          <div class="info-box" style="border-left:4px solid #f97316">
+            <div class="info-row"><span>Solde restant</span><span style="font-weight:800;color:#f97316">${remaining.toLocaleString()} XOF</span></div>
+            <div class="info-row"><span>Code</span><span style="font-family:monospace;font-weight:700">${code}</span></div>
+            <div class="info-row"><span>⚠️ Expire le</span><span style="font-weight:800;color:#dc2626">${expStr}</span></div>
+          </div>
+          <div style="background:#fef3c7;border-radius:8px;padding:14px;font-size:13px;color:#92400e">
+            <strong>Important :</strong> Vous avez <strong>14 jours</strong> pour utiliser votre solde restant. Après cette date, le solde sera automatiquement transféré vers votre portefeuille AfriShop (si vous avez un numéro de téléphone enregistré).
+          </div>
+          <div style="text-align:center;margin-top:16px">
+            <a href="https://afrishop.web.app" class="btn">🛍️ Utiliser maintenant</a>
+          </div>
+        </div>
+        <div class="footer">AfriShop Boutique · <a href="https://afrishop.web.app/gift-card.html">Vérifier mon solde</a></div>
+      </div>
+    `);
+  }
+
+  // ── Expiration carte cadeau ──────────────────────────────────
+  async sendGiftCardExpired(email: string, code: string, balance: number, walletTransferred: boolean) {
+    await this.send(email, `🔔 Carte cadeau expirée — Solde ${walletTransferred ? 'transféré' : 'perdu'} — AfriShop`, `
+      ${BASE_STYLE}
+      <div class="container">
+        <div class="header" style="background:linear-gradient(135deg,#1d4ed8,#2563eb)">
+          <h1>${walletTransferred ? '👛 Solde transféré !' : '⚠️ Carte expirée'}</h1>
+          <p>Votre carte cadeau a expiré</p>
+        </div>
+        <div class="body">
+          <div class="info-box">
+            <div class="info-row"><span>Code</span><span style="font-family:monospace;font-weight:700">${code}</span></div>
+            <div class="info-row"><span>Solde expiré</span><span style="font-weight:800">${balance.toLocaleString()} XOF</span></div>
+          </div>
+          ${walletTransferred
+            ? `<div style="background:#eff6ff;border-radius:8px;padding:14px;font-size:14px;color:#1d4ed8">
+                ✅ <strong>Bonne nouvelle !</strong> Votre solde de <strong>${balance.toLocaleString()} XOF</strong> a été automatiquement transféré vers votre portefeuille AfriShop. Vous pouvez l'utiliser pour vos prochaines commandes.
+                <div style="text-align:center;margin-top:12px"><a href="https://afrishop.web.app/wallet.html" class="btn">👛 Voir mon portefeuille</a></div>
+              </div>`
+            : `<div style="background:#fef2f2;border-radius:8px;padding:14px;font-size:13px;color:#991b1b">
+                Le solde de votre carte a expiré. Pour éviter cela à l'avenir, enregistrez votre numéro de téléphone lors de l'utilisation de vos cartes cadeaux.
+              </div>`
+          }
+        </div>
+        <div class="footer">AfriShop Boutique · <a href="https://afrishop.web.app">afrishop.web.app</a></div>
+      </div>
+    `);
+  }
+
   // ── Message support ─────────────────────────────────────────
   async sendContactMessage(dto: { name: string; contact: string; message: string }) {
     const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;

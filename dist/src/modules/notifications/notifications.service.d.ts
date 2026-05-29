@@ -13,6 +13,8 @@ export declare class NotificationsService {
         operator: string;
         momoNumber: string;
     }): Promise<void>;
+    sendGiftCardFirstUse(email: string, code: string, remaining: number, expiresAt: Date): Promise<void>;
+    sendGiftCardExpired(email: string, code: string, balance: number, walletTransferred: boolean): Promise<void>;
     sendContactMessage(dto: {
         name: string;
         contact: string;
