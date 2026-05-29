@@ -2,6 +2,7 @@ import { Controller, Post, Get, Body, Param, UseGuards, BadRequestException, Not
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AdminKeyGuard } from '../../common/guards/admin-key.guard';
 import { PrismaService } from '../../config/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 function generateCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -12,7 +13,10 @@ function generateCode(): string {
 @ApiTags('Cartes Cadeaux')
 @Controller('gift-cards')
 export class GiftCardsController {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   /* ── PUBLIC : Vérifier une carte ── */
   @Get('check/:code')
@@ -72,7 +76,7 @@ export class GiftCardsController {
   @Post('generate')
   @UseGuards(AdminKeyGuard)
   @ApiOperation({ summary: 'Générer des cartes cadeaux (admin)' })
-  async generate(@Body() dto: { amount: number; quantity?: number; note?: string }) {
+  async generate(@Body() dto: { amount: number; quantity?: number; note?: string; recipientEmail?: string }) {
     if (!dto.amount || dto.amount < 2000) {
       throw new BadRequestException('Montant minimum : 2000 XOF');
     }
@@ -80,15 +84,10 @@ export class GiftCardsController {
     const cards = [];
     for (let i = 0; i < qty; i++) {
       let code = generateCode();
-      // S'assurer que le code est unique
-      const existing: any[] = await this.prisma.$queryRawUnsafe(
-        `SELECT id FROM gift_cards WHERE code = $1`, code,
-      );
+      const existing: any[] = await this.prisma.$queryRawUnsafe(`SELECT id FROM gift_cards WHERE code = $1`, code);
       while (existing.length) {
         code = generateCode();
-        const check: any[] = await this.prisma.$queryRawUnsafe(
-          `SELECT id FROM gift_cards WHERE code = $1`, code,
-        );
+        const check: any[] = await this.prisma.$queryRawUnsafe(`SELECT id FROM gift_cards WHERE code = $1`, code);
         if (!check.length) break;
       }
       await this.prisma.$queryRawUnsafe(
@@ -97,8 +96,13 @@ export class GiftCardsController {
         code, dto.amount, dto.amount, dto.note || null,
       );
       cards.push({ code, amount: dto.amount, balance: dto.amount });
+
+      // Envoyer automatiquement par email si fourni
+      if (dto.recipientEmail) {
+        this.notifications.sendGiftCard(dto.recipientEmail, code, dto.amount, dto.note).catch(() => {});
+      }
     }
-    return { success: true, cards };
+    return { success: true, cards, emailSent: !!dto.recipientEmail };
   }
 
   /* ── ADMIN : Lister toutes les cartes ── */

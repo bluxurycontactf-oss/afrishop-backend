@@ -1,7 +1,9 @@
 import { OrdersService } from './orders.service';
+import { NotificationsService } from '../notifications/notifications.service';
 export declare class OrdersController {
     private orders;
-    constructor(orders: OrdersService);
+    private notifications;
+    constructor(orders: OrdersService, notifications: NotificationsService);
     create(dto: any): Promise<{
         items: {
             id: string;
@@ -261,6 +263,7 @@ export declare class OrdersController {
     }>;
     updateStatus(id: string, body: {
         status: string;
+        trackingNumber?: string;
     }): Promise<{
         id: string;
         createdAt: Date;

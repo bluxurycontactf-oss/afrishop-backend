@@ -1,16 +1,18 @@
-import { Controller, Post, Get, Put, Body, Param, Query, UseGuards, Request, Headers } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Post, Get, Put, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { AdminKeyGuard } from '../../common/guards/admin-key.guard';
 import { CustomerJwtGuard } from '../auth/customer-jwt.guard';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @ApiTags('Commandes')
 @Controller('orders')
 export class OrdersController {
-  constructor(private orders: OrdersService) {}
+  constructor(
+    private orders: OrdersService,
+    private notifications: NotificationsService,
+  ) {}
 
-  /* ── PUBLIC ── */
   @Post()
   @ApiOperation({ summary: 'Créer une commande' })
   create(@Body() dto: any) {
@@ -29,7 +31,6 @@ export class OrdersController {
     return this.orders.findOne(id);
   }
 
-  /* ── CLIENT CONNECTÉ ── */
   @Get('my/orders')
   @UseGuards(CustomerJwtGuard)
   @ApiOperation({ summary: 'Mes commandes (client connecté)' })
@@ -37,7 +38,6 @@ export class OrdersController {
     return this.orders.findByCustomer(req.user.id, query);
   }
 
-  /* ── ADMIN (clé admin ou JWT) ── */
   @Get()
   @UseGuards(AdminKeyGuard)
   @ApiOperation({ summary: 'Liste toutes les commandes (admin)' })
@@ -54,8 +54,23 @@ export class OrdersController {
 
   @Put(':id/status')
   @UseGuards(AdminKeyGuard)
-  @ApiOperation({ summary: 'Mettre à jour le statut (admin)' })
-  updateStatus(@Param('id') id: string, @Body() body: { status: string }) {
-    return this.orders.updateStatus(id, body.status);
+  @ApiOperation({ summary: 'Mettre à jour le statut + notifier le client (admin)' })
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() body: { status: string; trackingNumber?: string },
+  ) {
+    const order = await this.orders.updateStatus(id, body.status);
+
+    // Envoyer email de notification au client automatiquement
+    if (order && order.customerEmail) {
+      this.notifications.sendOrderStatusUpdate(
+        order.customerEmail,
+        order.orderNumber,
+        body.status,
+        body.trackingNumber,
+      ).catch(() => {});
+    }
+
+    return order;
   }
 }

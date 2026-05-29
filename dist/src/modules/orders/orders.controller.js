@@ -18,9 +18,11 @@ const swagger_1 = require("@nestjs/swagger");
 const orders_service_1 = require("./orders.service");
 const admin_key_guard_1 = require("../../common/guards/admin-key.guard");
 const customer_jwt_guard_1 = require("../auth/customer-jwt.guard");
+const notifications_service_1 = require("../notifications/notifications.service");
 let OrdersController = class OrdersController {
-    constructor(orders) {
+    constructor(orders, notifications) {
         this.orders = orders;
+        this.notifications = notifications;
     }
     create(dto) {
         return this.orders.create(dto);
@@ -40,8 +42,12 @@ let OrdersController = class OrdersController {
     getStats() {
         return this.orders.getDashboardStats();
     }
-    updateStatus(id, body) {
-        return this.orders.updateStatus(id, body.status);
+    async updateStatus(id, body) {
+        const order = await this.orders.updateStatus(id, body.status);
+        if (order && order.customerEmail) {
+            this.notifications.sendOrderStatusUpdate(order.customerEmail, order.orderNumber, body.status, body.trackingNumber).catch(() => { });
+        }
+        return order;
     }
 };
 exports.OrdersController = OrdersController;
@@ -99,16 +105,17 @@ __decorate([
 __decorate([
     (0, common_1.Put)(':id/status'),
     (0, common_1.UseGuards)(admin_key_guard_1.AdminKeyGuard),
-    (0, swagger_1.ApiOperation)({ summary: 'Mettre à jour le statut (admin)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Mettre à jour le statut + notifier le client (admin)' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], OrdersController.prototype, "updateStatus", null);
 exports.OrdersController = OrdersController = __decorate([
     (0, swagger_1.ApiTags)('Commandes'),
     (0, common_1.Controller)('orders'),
-    __metadata("design:paramtypes", [orders_service_1.OrdersService])
+    __metadata("design:paramtypes", [orders_service_1.OrdersService,
+        notifications_service_1.NotificationsService])
 ], OrdersController);
 //# sourceMappingURL=orders.controller.js.map

@@ -10,12 +10,13 @@ exports.GiftCardsModule = void 0;
 const common_1 = require("@nestjs/common");
 const gift_cards_controller_1 = require("./gift-cards.controller");
 const prisma_module_1 = require("../../config/prisma.module");
+const notifications_module_1 = require("../notifications/notifications.module");
 let GiftCardsModule = class GiftCardsModule {
 };
 exports.GiftCardsModule = GiftCardsModule;
 exports.GiftCardsModule = GiftCardsModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
+        imports: [prisma_module_1.PrismaModule, notifications_module_1.NotificationsModule],
         controllers: [gift_cards_controller_1.GiftCardsController],
     })
 ], GiftCardsModule);

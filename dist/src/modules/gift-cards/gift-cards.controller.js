@@ -17,14 +17,16 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const admin_key_guard_1 = require("../../common/guards/admin-key.guard");
 const prisma_service_1 = require("../../config/prisma.service");
+const notifications_service_1 = require("../notifications/notifications.service");
 function generateCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     const seg = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
     return `AFRI-${seg()}-${seg()}-${seg()}`;
 }
 let GiftCardsController = class GiftCardsController {
-    constructor(prisma) {
+    constructor(prisma, notifications) {
         this.prisma = prisma;
+        this.notifications = notifications;
     }
     async check(code) {
         const cards = await this.prisma.$queryRawUnsafe(`SELECT id, code, amount, balance, "isActive", "createdAt" FROM gift_cards WHERE code = $1`, code.toUpperCase().trim());
@@ -82,8 +84,11 @@ let GiftCardsController = class GiftCardsController {
             await this.prisma.$queryRawUnsafe(`INSERT INTO gift_cards (id, code, amount, balance, "isActive", note, "createdAt")
          VALUES (gen_random_uuid()::text, $1, $2, $3, true, $4, NOW())`, code, dto.amount, dto.amount, dto.note || null);
             cards.push({ code, amount: dto.amount, balance: dto.amount });
+            if (dto.recipientEmail) {
+                this.notifications.sendGiftCard(dto.recipientEmail, code, dto.amount, dto.note).catch(() => { });
+            }
         }
-        return { success: true, cards };
+        return { success: true, cards, emailSent: !!dto.recipientEmail };
     }
     async findAll() {
         const cards = await this.prisma.$queryRawUnsafe(`SELECT *, CAST(amount AS FLOAT) as amount, CAST(balance AS FLOAT) as balance
@@ -141,6 +146,7 @@ __decorate([
 exports.GiftCardsController = GiftCardsController = __decorate([
     (0, swagger_1.ApiTags)('Cartes Cadeaux'),
     (0, common_1.Controller)('gift-cards'),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notifications_service_1.NotificationsService])
 ], GiftCardsController);
 //# sourceMappingURL=gift-cards.controller.js.map

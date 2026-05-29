@@ -36,8 +36,8 @@ export declare class PaymentsController {
             currency: string;
             status: import(".prisma/client").$Enums.PaymentStatus;
             orderId: string;
-            amount: import("@prisma/client/runtime/library").Decimal;
             method: import(".prisma/client").$Enums.PaymentMethod;
+            amount: import("@prisma/client/runtime/library").Decimal;
             transactionId: string | null;
             phoneNumber: string | null;
             operator: string | null;
