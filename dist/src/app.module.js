@@ -23,6 +23,8 @@ const workers_module_1 = require("./modules/workers/workers.module");
 const notifications_module_1 = require("./modules/notifications/notifications.module");
 const gift_cards_module_1 = require("./modules/gift-cards/gift-cards.module");
 const wallet_module_1 = require("./modules/wallet/wallet.module");
+const reviews_module_1 = require("./modules/reviews/reviews.module");
+const coupons_module_1 = require("./modules/coupons/coupons.module");
 const prisma_module_1 = require("./config/prisma.module");
 let AppModule = class AppModule {
 };
@@ -50,6 +52,8 @@ exports.AppModule = AppModule = __decorate([
             notifications_module_1.NotificationsModule,
             gift_cards_module_1.GiftCardsModule,
             wallet_module_1.WalletModule,
+            reviews_module_1.ReviewsModule,
+            coupons_module_1.CouponsModule,
         ],
     })
 ], AppModule);
