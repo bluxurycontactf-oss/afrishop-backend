@@ -17,14 +17,16 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const prisma_service_1 = require("../../config/prisma.service");
 const admin_key_guard_1 = require("../../common/guards/admin-key.guard");
+const notifications_service_1 = require("../notifications/notifications.service");
 function calcFee(amount) {
     if (amount <= 2000)
         return 150;
     return Math.round(amount * 0.03);
 }
 let WalletController = class WalletController {
-    constructor(prisma) {
+    constructor(prisma, notifications) {
         this.prisma = prisma;
+        this.notifications = notifications;
     }
     async getBalance(phone) {
         const clean = phone.replace(/\D/g, '').slice(-8);
@@ -123,6 +125,12 @@ let WalletController = class WalletController {
         const rows = await this.prisma.$queryRawUnsafe(`INSERT INTO withdrawal_requests (id, phone, amount, fee, "netAmount", operator, "momoNumber", status, "createdAt")
        VALUES (gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, 'PENDING', NOW())
        RETURNING *`, dto.phone.trim(), dto.amount, fee, net, dto.operator, dto.momoNumber);
+        if (dto.email) {
+            this.notifications.sendWithdrawalConfirmation(dto.email, {
+                amount: dto.amount, fee, net,
+                operator: dto.operator, momoNumber: dto.momoNumber,
+            }).catch(() => { });
+        }
         return {
             success: true,
             withdrawalId: rows[0]?.id,
@@ -132,7 +140,7 @@ let WalletController = class WalletController {
             operator: dto.operator,
             momoNumber: dto.momoNumber,
             newBalance,
-            message: `Demande de retrait de ${net.toLocaleString()} XOF vers ${dto.operator} envoyée. Traitement sous 24h.`,
+            message: `Demande de retrait de ${net.toLocaleString()} XOF vers ${dto.operator} envoyée. Traitement sous 48h.`,
         };
     }
     async listWithdrawals() {
@@ -226,6 +234,7 @@ __decorate([
 exports.WalletController = WalletController = __decorate([
     (0, swagger_1.ApiTags)('Portefeuille'),
     (0, common_1.Controller)('wallet'),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notifications_service_1.NotificationsService])
 ], WalletController);
 //# sourceMappingURL=wallet.controller.js.map

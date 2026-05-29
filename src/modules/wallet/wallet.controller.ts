@@ -2,6 +2,7 @@ import { Controller, Post, Get, Body, Param, BadRequestException, NotFoundExcept
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { PrismaService } from '../../config/prisma.service';
 import { AdminKeyGuard } from '../../common/guards/admin-key.guard';
+import { NotificationsService } from '../notifications/notifications.service';
 
 function calcFee(amount: number): number {
   if (amount <= 2000) return 150;
@@ -11,7 +12,10 @@ function calcFee(amount: number): number {
 @ApiTags('Portefeuille')
 @Controller('wallet')
 export class WalletController {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   // ── Voir le solde ─────────────────────────────────────────────
   @Get(':phone')
@@ -135,7 +139,7 @@ export class WalletController {
   // ── Demander un retrait ───────────────────────────────────────
   @Post('withdraw')
   @ApiOperation({ summary: 'Demander un retrait vers Mobile Money' })
-  async withdraw(@Body() dto: { phone: string; amount: number; operator: string; momoNumber: string }) {
+  async withdraw(@Body() dto: { phone: string; amount: number; operator: string; momoNumber: string; email?: string }) {
     if (!dto.phone || !dto.amount || !dto.operator || !dto.momoNumber) {
       throw new BadRequestException('Tous les champs sont requis');
     }
@@ -173,6 +177,14 @@ export class WalletController {
       dto.phone.trim(), dto.amount, fee, net, dto.operator, dto.momoNumber,
     );
 
+    // Envoyer email de confirmation au client si email fourni
+    if (dto.email) {
+      this.notifications.sendWithdrawalConfirmation(dto.email, {
+        amount: dto.amount, fee, net,
+        operator: dto.operator, momoNumber: dto.momoNumber,
+      }).catch(() => {});
+    }
+
     return {
       success: true,
       withdrawalId: rows[0]?.id,
@@ -182,7 +194,7 @@ export class WalletController {
       operator: dto.operator,
       momoNumber: dto.momoNumber,
       newBalance,
-      message: `Demande de retrait de ${net.toLocaleString()} XOF vers ${dto.operator} envoyée. Traitement sous 24h.`,
+      message: `Demande de retrait de ${net.toLocaleString()} XOF vers ${dto.operator} envoyée. Traitement sous 48h.`,
     };
   }
 

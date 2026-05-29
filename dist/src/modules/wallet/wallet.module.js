@@ -10,12 +10,13 @@ exports.WalletModule = void 0;
 const common_1 = require("@nestjs/common");
 const wallet_controller_1 = require("./wallet.controller");
 const prisma_module_1 = require("../../config/prisma.module");
+const notifications_module_1 = require("../notifications/notifications.module");
 let WalletModule = class WalletModule {
 };
 exports.WalletModule = WalletModule;
 exports.WalletModule = WalletModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
+        imports: [prisma_module_1.PrismaModule, notifications_module_1.NotificationsModule],
         controllers: [wallet_controller_1.WalletController],
     })
 ], WalletModule);

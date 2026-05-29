@@ -129,6 +129,36 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
       </div>
     `);
     }
+    async sendWithdrawalConfirmation(email, dto) {
+        if (!email)
+            return;
+        await this.send(email, `💸 Demande de retrait reçue — AfriShop Portefeuille`, `
+      ${BASE_STYLE}
+      <div class="container">
+        <div class="header" style="background:linear-gradient(135deg,#1d4ed8,#2563eb)">
+          <h1>💸 Demande de retrait</h1>
+          <p>Votre demande a bien été enregistrée</p>
+        </div>
+        <div class="body">
+          <p style="font-size:15px;color:#374151">Votre demande de retrait a été reçue et sera traitée sous <strong>48 heures</strong>.</p>
+          <div class="info-box">
+            <div class="info-row"><span>Montant demandé</span><span><strong>${dto.amount.toLocaleString()} XOF</strong></span></div>
+            <div class="info-row"><span>Frais AfriShop</span><span style="color:#dc2626">- ${dto.fee.toLocaleString()} XOF</span></div>
+            <div class="info-row"><span>Vous recevrez</span><span><strong style="color:#16a34a">${dto.net.toLocaleString()} XOF</strong></span></div>
+            <div class="info-row"><span>Opérateur</span><span>${dto.operator}</span></div>
+            <div class="info-row"><span>Numéro de réception</span><span><strong>${dto.momoNumber}</strong></span></div>
+          </div>
+          <div style="background:#eff6ff;border-radius:8px;padding:14px;margin-top:8px">
+            <p style="font-size:13px;color:#1d4ed8;margin:0"><strong>⏰ Délai de traitement :</strong> Votre retrait sera effectué dans les <strong>48 heures</strong> suivant cette demande.<br><br>En cas de problème, contactez notre support depuis la boutique.</p>
+          </div>
+          <div style="text-align:center;margin-top:16px">
+            <a href="https://afrishop.web.app/wallet.html" class="btn">👛 Voir mon portefeuille</a>
+          </div>
+        </div>
+        <div class="footer">AfriShop Boutique · <a href="https://afrishop.web.app">afrishop.web.app</a></div>
+      </div>
+    `);
+    }
     async sendContactMessage(dto) {
         const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
         await this.send(adminEmail, `💬 Nouveau message de ${dto.name} — AfriShop Support`, `

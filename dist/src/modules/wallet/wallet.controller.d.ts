@@ -1,7 +1,9 @@
 import { PrismaService } from '../../config/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 export declare class WalletController {
     private prisma;
-    constructor(prisma: PrismaService);
+    private notifications;
+    constructor(prisma: PrismaService, notifications: NotificationsService);
     getBalance(phone: string): Promise<{
         phone: string;
         balance: number;
@@ -43,6 +45,7 @@ export declare class WalletController {
         amount: number;
         operator: string;
         momoNumber: string;
+        email?: string;
     }): Promise<{
         success: boolean;
         withdrawalId: any;
