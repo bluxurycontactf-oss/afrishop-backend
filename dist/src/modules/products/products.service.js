@@ -31,7 +31,7 @@ let ProductsService = class ProductsService {
             const [products, total] = await Promise.all([
                 this.prisma.product.findMany({
                     where, skip, take: limit,
-                    include: { images: true },
+                    include: { images: { orderBy: { sortOrder: 'asc' }, take: 3 } },
                     orderBy: { createdAt: 'desc' },
                 }),
                 this.prisma.product.count({ where }),
@@ -39,7 +39,7 @@ let ProductsService = class ProductsService {
             return { products, total, page, limit, pages: Math.ceil(total / limit) };
         }
         catch (e) {
-            throw new Error(`findAll error: ${e.message}`);
+            throw e;
         }
     }
     async findOne(id) {

@@ -19,7 +19,7 @@ export class ProductsService {
       const [products, total] = await Promise.all([
         this.prisma.product.findMany({
           where, skip, take: limit,
-          include: { images: true },
+          include: { images: { orderBy: { sortOrder: 'asc' }, take: 3 } },
           orderBy: { createdAt: 'desc' },
         }),
         this.prisma.product.count({ where }),
@@ -27,8 +27,7 @@ export class ProductsService {
 
       return { products, total, page, limit, pages: Math.ceil(total / limit) };
     } catch (e) {
-      // Retourner l'erreur visible pour debug
-      throw new Error(`findAll error: ${e.message}`);
+      throw e;
     }
   }
 
