@@ -1,12 +1,29 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { AdminKeyGuard } from '../../common/guards/admin-key.guard';
 import { CategoriesService } from './categories.service';
 
 @ApiTags('Catégories')
 @Controller('categories')
 export class CategoriesController {
   constructor(private categories: CategoriesService) {}
-  @Get() findAll() { return this.categories.findAll(); }
-  @Post() @UseGuards(AuthGuard('jwt')) create(@Body() dto: any) { return this.categories.create(dto); }
+
+  @Get()
+  @ApiOperation({ summary: 'Lister les catégories (public)' })
+  findAll() { return this.categories.findAll(); }
+
+  @Post()
+  @UseGuards(AdminKeyGuard)
+  @ApiOperation({ summary: 'Créer une catégorie (admin)' })
+  create(@Body() dto: any) { return this.categories.create(dto); }
+
+  @Put(':id')
+  @UseGuards(AdminKeyGuard)
+  @ApiOperation({ summary: 'Modifier une catégorie (admin)' })
+  update(@Param('id') id: string, @Body() dto: any) { return this.categories.update(id, dto); }
+
+  @Delete(':id')
+  @UseGuards(AdminKeyGuard)
+  @ApiOperation({ summary: 'Supprimer une catégorie (admin)' })
+  delete(@Param('id') id: string) { return this.categories.delete(id); }
 }

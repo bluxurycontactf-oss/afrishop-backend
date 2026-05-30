@@ -29,12 +29,33 @@ export declare class CategoriesService {
         parentId: string | null;
         sortOrder: number;
     })[]>;
-    create(data: {
+    create(data: any): Promise<{
+        id: string;
         name: string;
-        nameEn?: string;
-        parentId?: string;
-        image?: string;
-    }): Promise<{
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
+        nameEn: string | null;
+        description: string | null;
+        image: string | null;
+        parentId: string | null;
+        sortOrder: number;
+    }>;
+    update(id: string, data: any): Promise<{
+        id: string;
+        name: string;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
+        nameEn: string | null;
+        description: string | null;
+        image: string | null;
+        parentId: string | null;
+        sortOrder: number;
+    }>;
+    delete(id: string): Promise<{
         id: string;
         name: string;
         isActive: boolean;

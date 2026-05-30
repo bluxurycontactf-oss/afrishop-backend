@@ -42,4 +42,30 @@ export declare class CategoriesController {
         parentId: string | null;
         sortOrder: number;
     }>;
+    update(id: string, dto: any): Promise<{
+        id: string;
+        name: string;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
+        nameEn: string | null;
+        description: string | null;
+        image: string | null;
+        parentId: string | null;
+        sortOrder: number;
+    }>;
+    delete(id: string): Promise<{
+        id: string;
+        name: string;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
+        nameEn: string | null;
+        description: string | null;
+        image: string | null;
+        parentId: string | null;
+        sortOrder: number;
+    }>;
 }
