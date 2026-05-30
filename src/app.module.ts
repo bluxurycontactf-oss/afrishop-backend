@@ -16,6 +16,7 @@ import { GiftCardsModule } from './modules/gift-cards/gift-cards.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
+import { PushModule } from './modules/push/push.module';
 import { PrismaModule } from './config/prisma.module';
 
 @Module({
@@ -51,6 +52,7 @@ import { PrismaModule } from './config/prisma.module';
     WalletModule,
     ReviewsModule,
     CouponsModule,
+    PushModule,
   ],
 })
 export class AppModule {}
