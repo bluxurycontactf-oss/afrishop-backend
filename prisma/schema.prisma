@@ -360,3 +360,48 @@ model Analytics {
 
   @@map("analytics")
 }
+
+// ── Resi Group — Contenu du site ─────────────────────────────
+model ResiContent {
+  id        String   @id @default(uuid())
+  key       String   @unique  // 'immo' | 'vols' | 'cars' | 'liv' | 'restos' | 'svcs' | 'streaming' | 'settings'
+  data      Json
+  updatedAt DateTime @updatedAt
+
+  @@map("resi_content")
+}
+
+// ── Resi Group — Demandes clients ───────────────────────────
+model ResiRequest {
+  id        String            @id @default(uuid())
+  type      ResiRequestType
+  name      String
+  phone     String
+  email     String?
+  subject   String?           // service demandé (ex: "Netflix Standard")
+  message   String?
+  status    ResiRequestStatus @default(NEW)
+  data      Json?             // champs supplémentaires
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@map("resi_requests")
+}
+
+enum ResiRequestType {
+  STREAMING
+  IMMOBILIER
+  VOLS
+  VOITURES
+  LIVRAISON
+  RESTAURATION
+  SERVICES
+  CONTACT
+}
+
+enum ResiRequestStatus {
+  NEW
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}

@@ -17,6 +17,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
 import { PushModule } from './modules/push/push.module';
+import { ResiGroupModule } from './modules/resigroup/resigroup.module';
 import { PrismaModule } from './config/prisma.module';
 
 @Module({
@@ -53,6 +54,7 @@ import { PrismaModule } from './config/prisma.module';
     ReviewsModule,
     CouponsModule,
     PushModule,
+    ResiGroupModule,
   ],
 })
 export class AppModule {}
