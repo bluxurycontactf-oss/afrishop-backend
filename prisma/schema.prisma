@@ -381,9 +381,10 @@ model ResiRequest {
   subject   String?           // service demandé (ex: "Netflix Standard")
   message   String?
   status    ResiRequestStatus @default(NEW)
-  data      Json?             // champs supplémentaires
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  data            Json?             // champs supplémentaires
+  resiCustomerId  String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   @@map("resi_requests")
 }
@@ -416,4 +417,16 @@ model ResiAdmin {
   updatedAt    DateTime @updatedAt
 
   @@map("resi_admin")
+}
+
+// ── Resi Group — Clients ─────────────────────────────────────
+model ResiCustomer {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  phone        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  @@map("resi_customers")
 }
