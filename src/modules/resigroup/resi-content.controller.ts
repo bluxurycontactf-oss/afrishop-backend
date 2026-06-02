@@ -5,7 +5,7 @@ import {
 import { ResiGroupService } from './resigroup.service';
 import { AuthGuard } from '@nestjs/passport';
 
-@Controller('api/resi/content')
+@Controller('resi/content')
 export class ResiContentController {
   constructor(private service: ResiGroupService) {}
 
