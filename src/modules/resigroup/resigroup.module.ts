@@ -4,6 +4,7 @@ import { ResiRequestController } from './resi-request.controller';
 import { ResiAuthController } from './resi-auth.controller';
 import { ResiCustomerController } from './resi-customer.controller';
 import { ResiGroupService } from './resigroup.service';
+import { ResiEmailService } from './resi-email.service';
 import { PrismaModule } from '../../config/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 
@@ -16,6 +17,6 @@ import { JwtModule } from '@nestjs/jwt';
     }),
   ],
   controllers: [ResiContentController, ResiRequestController, ResiAuthController, ResiCustomerController],
-  providers: [ResiGroupService],
+  providers: [ResiGroupService, ResiEmailService],
 })
 export class ResiGroupModule {}
