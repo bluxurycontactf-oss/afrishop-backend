@@ -150,7 +150,7 @@ export class ResiEmailService {
         </div>
         <div class="footer">
           © 2025 ResiGo · Cotonou, Bénin<br>
-          <a href="https://resigroup.web.app">resigroup.web.app</a>
+          <a href="https://resigo.web.app">resigo.web.app</a>
         </div>
       </div>
     </body></html>`;
@@ -204,7 +204,7 @@ export class ResiEmailService {
           </div>
         </div>
         <div class="footer">
-          ResiGo Admin · <a href="https://resigroup.web.app/admin.html" style="color:#60A5FA">Ouvrir l'admin →</a>
+          ResiGo Admin · <a href="https://resigo.web.app/admin.html" style="color:#60A5FA">Ouvrir l'admin →</a>
         </div>
       </div>
     </body></html>`;
@@ -239,13 +239,13 @@ export class ResiEmailService {
           </p>
           <p style="font-size:14px;color:#475569;line-height:1.7">
             Merci de votre confiance. N'hésitez pas à revenir sur
-            <a href="https://resigroup.web.app" style="color:#1B4FD8;font-weight:600">resigroup.web.app</a>
+            <a href="https://resigo.web.app" style="color:#1B4FD8;font-weight:600">resigo.web.app</a>
             pour découvrir tous nos services.
           </p>
         </div>
         <div class="footer">
           © 2025 ResiGo · Cotonou, Bénin ·
-          <a href="https://resigroup.web.app">resigroup.web.app</a>
+          <a href="https://resigo.web.app">resigo.web.app</a>
         </div>
       </div>
     </body></html>`;
