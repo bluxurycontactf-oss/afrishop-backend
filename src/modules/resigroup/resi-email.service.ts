@@ -53,7 +53,7 @@ export class ResiEmailService {
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   });
 
-  private from = `Resi Group <${process.env.SMTP_USER}>`;
+  private from = `ResiGo <${process.env.SMTP_USER}>`;
   private adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
   private phone = process.env.RESI_PHONE || '+229 97 43 93 79';
 
@@ -109,7 +109,7 @@ export class ResiEmailService {
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">${STYLE}</head><body>
       <div class="wrap">
         <div class="header">
-          <h1>Resi Group</h1>
+          <h1>ResiGo</h1>
           <p>Votre demande a bien été reçue ✅</p>
         </div>
         <div class="body">
@@ -133,7 +133,7 @@ export class ResiEmailService {
             <div class="phone-box">
               <div style="font-size:12px;color:#64748B;margin-bottom:4px">Numéro de dépôt</div>
               <div class="phone">${this.phone}</div>
-              <div style="font-size:12px;color:#64748B;margin-top:4px">Nom du compte : <strong>Resi Group</strong></div>
+              <div style="font-size:12px;color:#64748B;margin-top:4px">Nom du compte : <strong>ResiGo</strong></div>
             </div>
             <div class="step">
               <div class="step-num">2</div>
@@ -149,13 +149,13 @@ export class ResiEmailService {
           </p>
         </div>
         <div class="footer">
-          © 2025 Resi Group · Cotonou, Bénin<br>
+          © 2025 ResiGo · Cotonou, Bénin<br>
           <a href="https://resigroup.web.app">resigroup.web.app</a>
         </div>
       </div>
     </body></html>`;
 
-    await this.send(req.email, `✅ Demande reçue — ${typeLabel} | Resi Group`, html);
+    await this.send(req.email, `✅ Demande reçue — ${typeLabel} | ResiGo`, html);
   }
 
   // ── Email admin : nouvelle demande ──────────────────────────
@@ -204,14 +204,14 @@ export class ResiEmailService {
           </div>
         </div>
         <div class="footer">
-          Resi Group Admin · <a href="https://resigroup.web.app/admin.html" style="color:#60A5FA">Ouvrir l'admin →</a>
+          ResiGo Admin · <a href="https://resigroup.web.app/admin.html" style="color:#60A5FA">Ouvrir l'admin →</a>
         </div>
       </div>
     </body></html>`;
 
     await this.send(
       this.adminEmail,
-      `🔔 Nouvelle demande ${typeLabel} — ${req.name} | Resi Group`,
+      `🔔 Nouvelle demande ${typeLabel} — ${req.name} | ResiGo`,
       html,
     );
   }
@@ -226,7 +226,7 @@ export class ResiEmailService {
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">${STYLE}</head><body>
       <div class="wrap">
         <div class="header" style="background:linear-gradient(135deg,#10B981,#059669)">
-          <h1>Resi Group</h1>
+          <h1>ResiGo</h1>
           <p>Votre demande a été traitée ✅</p>
         </div>
         <div class="body">
@@ -244,11 +244,11 @@ export class ResiEmailService {
           </p>
         </div>
         <div class="footer">
-          © 2025 Resi Group · Cotonou, Bénin ·
+          © 2025 ResiGo · Cotonou, Bénin ·
           <a href="https://resigroup.web.app">resigroup.web.app</a>
         </div>
       </div>
     </body></html>`;
-    await this.send(req.email, `✅ Demande traitée — ${typeLabel} | Resi Group`, html);
+    await this.send(req.email, `✅ Demande traitée — ${typeLabel} | ResiGo`, html);
   }
 }
