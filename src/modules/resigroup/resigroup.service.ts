@@ -1,15 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
 
-const DEFAULT_CONTENT: Record<string, any[]> = {
-  immo: [],
-  vols: [],
-  cars: [],
-  liv: [],
-  restos: [],
-  svcs: [],
-  streaming: [],
-  settings: [],
+const DEFAULT_CONTENT: Record<string, any> = {
+  immo: [], vols: [], cars: [], liv: [],
+  restos: [], svcs: [], streaming: [], settings: {},
 };
 
 @Injectable()
@@ -19,67 +13,87 @@ export class ResiGroupService {
   // ─── CONTENT ───────────────────────────────────────────────
 
   async getAllContent(): Promise<Record<string, any>> {
-    const rows = await this.prisma.resiContent.findMany();
-    const result: Record<string, any> = {};
-    for (const row of rows) {
-      result[row.key] = row.data;
+    try {
+      const rows = await this.prisma.resiContent.findMany();
+      const result: Record<string, any> = { ...DEFAULT_CONTENT };
+      for (const row of rows) {
+        result[row.key] = row.data;
+      }
+      return result;
+    } catch (e) {
+      // Tables not created yet — return defaults
+      console.warn('[ResiGroup] resi_content table not ready:', e.message);
+      return { ...DEFAULT_CONTENT };
     }
-    // Fill missing keys with empty defaults
-    for (const key of Object.keys(DEFAULT_CONTENT)) {
-      if (!(key in result)) result[key] = DEFAULT_CONTENT[key];
-    }
-    return result;
   }
 
   async getContent(key: string): Promise<any> {
-    const row = await this.prisma.resiContent.findUnique({ where: { key } });
-    return row ? row.data : DEFAULT_CONTENT[key] ?? null;
+    try {
+      const row = await this.prisma.resiContent.findUnique({ where: { key } });
+      return row ? row.data : (DEFAULT_CONTENT[key] ?? null);
+    } catch (e) {
+      console.warn('[ResiGroup] getContent error:', e.message);
+      return DEFAULT_CONTENT[key] ?? null;
+    }
   }
 
   async upsertContent(key: string, data: any): Promise<any> {
-    const row = await this.prisma.resiContent.upsert({
-      where: { key },
-      update: { data },
-      create: { key, data },
-    });
-    return row;
+    try {
+      return await this.prisma.resiContent.upsert({
+        where: { key },
+        update: { data },
+        create: { key, data },
+      });
+    } catch (e) {
+      console.error('[ResiGroup] upsertContent error:', e.message);
+      throw new Error('Impossible de sauvegarder — tables non créées dans Supabase');
+    }
   }
 
   async upsertAllContent(payload: Record<string, any>): Promise<void> {
-    const keys = Object.keys(payload);
-    await Promise.all(
-      keys.map(key =>
-        this.prisma.resiContent.upsert({
-          where: { key },
-          update: { data: payload[key] },
-          create: { key, data: payload[key] },
-        }),
-      ),
-    );
+    try {
+      await Promise.all(
+        Object.keys(payload).map(key =>
+          this.prisma.resiContent.upsert({
+            where: { key },
+            update: { data: payload[key] },
+            create: { key, data: payload[key] },
+          }),
+        ),
+      );
+    } catch (e) {
+      console.error('[ResiGroup] upsertAllContent error:', e.message);
+      throw new Error('Impossible de sauvegarder — tables non créées dans Supabase');
+    }
   }
 
   // ─── REQUESTS ──────────────────────────────────────────────
 
   async createRequest(dto: {
-    type: any;
-    name: string;
-    phone: string;
-    email?: string;
-    subject?: string;
-    message?: string;
-    data?: any;
+    type: any; name: string; phone: string;
+    email?: string; subject?: string; message?: string; data?: any;
   }) {
-    return this.prisma.resiRequest.create({ data: dto });
+    try {
+      return await this.prisma.resiRequest.create({ data: dto });
+    } catch (e) {
+      console.error('[ResiGroup] createRequest error:', e.message);
+      throw new Error('Impossible d\'enregistrer la demande — tables non créées');
+    }
   }
 
   async getAllRequests(type?: string, status?: string) {
-    return this.prisma.resiRequest.findMany({
-      where: {
-        ...(type && { type: type as any }),
-        ...(status && { status: status as any }),
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    try {
+      return await this.prisma.resiRequest.findMany({
+        where: {
+          ...(type && { type: type as any }),
+          ...(status && { status: status as any }),
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (e) {
+      console.warn('[ResiGroup] getAllRequests error:', e.message);
+      return [];
+    }
   }
 
   async updateRequestStatus(id: string, status: string) {
@@ -98,12 +112,16 @@ export class ResiGroupService {
   }
 
   async getRequestStats() {
-    const [total, newCount, inProgress, done] = await Promise.all([
-      this.prisma.resiRequest.count(),
-      this.prisma.resiRequest.count({ where: { status: 'NEW' } }),
-      this.prisma.resiRequest.count({ where: { status: 'IN_PROGRESS' } }),
-      this.prisma.resiRequest.count({ where: { status: 'DONE' } }),
-    ]);
-    return { total, new: newCount, inProgress, done };
+    try {
+      const [total, newCount, inProgress, done] = await Promise.all([
+        this.prisma.resiRequest.count(),
+        this.prisma.resiRequest.count({ where: { status: 'NEW' } }),
+        this.prisma.resiRequest.count({ where: { status: 'IN_PROGRESS' } }),
+        this.prisma.resiRequest.count({ where: { status: 'DONE' } }),
+      ]);
+      return { total, new: newCount, inProgress, done };
+    } catch (e) {
+      return { total: 0, new: 0, inProgress: 0, done: 0 };
+    }
   }
 }
