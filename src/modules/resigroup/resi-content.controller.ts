@@ -1,9 +1,6 @@
-import {
-  Controller, Get, Put, Param, Body,
-  UseGuards, HttpCode, HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Put, Param, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { ResiGroupService } from './resigroup.service';
-import { AuthGuard } from '@nestjs/passport';
+import { ResiAdminGuard } from './resi-admin.guard';
 
 @Controller('resi/content')
 export class ResiContentController {
@@ -20,18 +17,18 @@ export class ResiContentController {
     return this.service.getContent(key);
   }
 
-  // ── Admin: save all content at once (Publish button) ────────
+  // ── Admin only: save all content (Publish button) ────────────
   @Put()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(ResiAdminGuard)
   @HttpCode(HttpStatus.OK)
   async saveAll(@Body() body: Record<string, any>) {
     await this.service.upsertAllContent(body);
     return { success: true, message: 'Contenu publié avec succès' };
   }
 
-  // ── Admin: save one section ──────────────────────────────────
+  // ── Admin only: save one section ─────────────────────────────
   @Put(':key')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(ResiAdminGuard)
   @HttpCode(HttpStatus.OK)
   async saveOne(@Param('key') key: string, @Body() body: { data: any }) {
     const row = await this.service.upsertContent(key, body.data);

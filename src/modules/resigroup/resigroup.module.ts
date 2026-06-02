@@ -5,6 +5,8 @@ import { ResiAuthController } from './resi-auth.controller';
 import { ResiCustomerController } from './resi-customer.controller';
 import { ResiGroupService } from './resigroup.service';
 import { ResiEmailService } from './resi-email.service';
+import { ResiAdminGuard } from './resi-admin.guard';
+import { ResiCustomerGuard } from './resi-customer.guard';
 import { PrismaModule } from '../../config/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 
@@ -13,10 +15,10 @@ import { JwtModule } from '@nestjs/jwt';
     PrismaModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'afrishop-secret',
-      signOptions: { expiresIn: '30d' },
+      signOptions: { expiresIn: '8h' }, // Réduit de 30j à 8h
     }),
   ],
   controllers: [ResiContentController, ResiRequestController, ResiAuthController, ResiCustomerController],
-  providers: [ResiGroupService, ResiEmailService],
+  providers: [ResiGroupService, ResiEmailService, ResiAdminGuard, ResiCustomerGuard],
 })
 export class ResiGroupModule {}

@@ -1,6 +1,6 @@
 import { Controller, Post, Get, Body, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthGuard } from '@nestjs/passport';
+import { ResiCustomerGuard } from './resi-customer.guard';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../config/prisma.service';
 
@@ -22,7 +22,7 @@ export class ResiCustomerController {
       const customer = await this.prisma.resiCustomer.create({
         data: { name, email, passwordHash: hash, phone },
       });
-      const token = this.jwt.sign({ sub: customer.id, email: customer.email, role: 'RESI_CUSTOMER' });
+      const token = this.jwt.sign({ sub: customer.id, email: customer.email, role: 'RESI_CUSTOMER' }, { expiresIn: '7d' });
       return { success: true, token, customer: { id: customer.id, name: customer.name, email: customer.email } };
     } catch (e) {
       return { success: false, message: 'Erreur lors de la création du compte' };
@@ -40,7 +40,7 @@ export class ResiCustomerController {
       if (!customer) return { success: false, message: 'Identifiants incorrects' };
       const valid = await bcrypt.compare(password, customer.passwordHash);
       if (!valid) return { success: false, message: 'Identifiants incorrects' };
-      const token = this.jwt.sign({ sub: customer.id, email: customer.email, role: 'RESI_CUSTOMER' });
+      const token = this.jwt.sign({ sub: customer.id, email: customer.email, role: 'RESI_CUSTOMER' }, { expiresIn: '7d' });
       return { success: true, token, customer: { id: customer.id, name: customer.name, email: customer.email } };
     } catch (e) {
       return { success: false, message: 'Erreur de connexion' };
@@ -49,7 +49,7 @@ export class ResiCustomerController {
 
   // ── Get profile ──────────────────────────────────────────────
   @Get('me')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(ResiCustomerGuard)
   async me(@Request() req: any) {
     try {
       const customer = await this.prisma.resiCustomer.findUnique({
@@ -64,7 +64,7 @@ export class ResiCustomerController {
 
   // ── Get my requests (order history) ─────────────────────────
   @Get('requests')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(ResiCustomerGuard)
   async myRequests(@Request() req: any) {
     try {
       return await this.prisma.resiRequest.findMany({
@@ -78,7 +78,7 @@ export class ResiCustomerController {
 
   // ── Update profile ───────────────────────────────────────────
   @Post('update')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(ResiCustomerGuard)
   @HttpCode(HttpStatus.OK)
   async update(@Request() req: any, @Body() body: { name?: string; phone?: string; currentPassword?: string; newPassword?: string }) {
     try {
