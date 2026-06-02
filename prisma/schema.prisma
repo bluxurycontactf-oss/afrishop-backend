@@ -405,3 +405,15 @@ enum ResiRequestStatus {
   DONE
   CANCELLED
 }
+
+// ── Resi Group — Admin credentials ──────────────────────────
+model ResiAdmin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String   @default("Admin")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("resi_admin")
+}
