@@ -124,4 +124,30 @@ export class ResiGroupService {
       return { total: 0, new: 0, inProgress: 0, done: 0 };
     }
   }
+
+  // ─── Check property availability ───────────────────────────
+  async checkAvailability(propertyId: string, checkIn: string, checkOut: string): Promise<{ available: boolean; message: string }> {
+    try {
+      const ci = new Date(checkIn);
+      const co = new Date(checkOut);
+      if (isNaN(ci.getTime()) || isNaN(co.getTime())) return { available: false, message: 'Dates invalides' };
+      if (co <= ci) return { available: false, message: 'Date de départ doit être après la date d\'arrivée' };
+
+      const existing = await this.prisma.resiRequest.findMany({
+        where: { type: 'IMMOBILIER' as any, status: { in: ['NEW', 'IN_PROGRESS'] as any[] } },
+        select: { data: true },
+      });
+
+      for (const req of existing) {
+        const d = req.data as any;
+        if (d && d.propertyId === propertyId && d.checkIn && d.checkOut) {
+          const ei = new Date(d.checkIn), eo = new Date(d.checkOut);
+          if (ci < eo && co > ei) {
+            return { available: false, message: `Déjà réservé du ${d.checkIn} au ${d.checkOut}` };
+          }
+        }
+      }
+      return { available: true, message: 'Disponible ✅' };
+    } catch (e) { return { available: true, message: 'Disponible' }; }
+  }
 }
