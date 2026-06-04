@@ -14,6 +14,10 @@ export async function createNestApp() {
 
   app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
 
+  // Increase body size limit for base64 photo uploads (50MB)
+  expressApp.use(express.json({ limit: '50mb' }));
+  expressApp.use(express.urlencoded({ limit: '50mb', extended: true }));
+
   // CORS — accepte Netlify + Firebase + localhost
   app.enableCors({
     origin: [
