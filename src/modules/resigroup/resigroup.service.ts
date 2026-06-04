@@ -125,29 +125,98 @@ export class ResiGroupService {
     }
   }
 
-  // ─── Check property availability ───────────────────────────
-  async checkAvailability(propertyId: string, checkIn: string, checkOut: string): Promise<{ available: boolean; message: string }> {
+  // ─── Check property availability (with next available dates) ─
+  async checkAvailability(propertyId: string, checkIn: string, checkOut: string): Promise<{
+    available: boolean;
+    message: string;
+    nextAvailableFrom?: string;
+    availableUntil?: string;
+    conflicts?: Array<{ checkIn: string; checkOut: string }>;
+  }> {
     try {
       const ci = new Date(checkIn);
       const co = new Date(checkOut);
-      if (isNaN(ci.getTime()) || isNaN(co.getTime())) return { available: false, message: 'Dates invalides' };
-      if (co <= ci) return { available: false, message: 'Date de départ doit être après la date d\'arrivée' };
+      if (isNaN(ci.getTime()) || isNaN(co.getTime())) {
+        return { available: false, message: 'Dates invalides' };
+      }
+      if (co <= ci) {
+        return { available: false, message: 'La date de depart doit etre apres la date d arrivee' };
+      }
 
+      // Load all active bookings for this property
       const existing = await this.prisma.resiRequest.findMany({
         where: { type: 'IMMOBILIER' as any, status: { in: ['NEW', 'IN_PROGRESS'] as any[] } },
         select: { data: true },
+        orderBy: { createdAt: 'asc' },
       });
+
+      const conflicts: Array<{ checkIn: string; checkOut: string }> = [];
 
       for (const req of existing) {
         const d = req.data as any;
-        if (d && d.propertyId === propertyId && d.checkIn && d.checkOut) {
-          const ei = new Date(d.checkIn), eo = new Date(d.checkOut);
-          if (ci < eo && co > ei) {
-            return { available: false, message: `Déjà réservé du ${d.checkIn} au ${d.checkOut}` };
-          }
+        if (!d || !d.checkIn || !d.checkOut) continue;
+        if (d.propertyId !== propertyId && d.bien !== propertyId) continue;
+
+        const ei = new Date(d.checkIn);
+        const eo = new Date(d.checkOut);
+
+        if (ci < eo && co > ei) {
+          conflicts.push({ checkIn: d.checkIn, checkOut: d.checkOut });
         }
       }
-      return { available: true, message: 'Disponible ✅' };
-    } catch (e) { return { available: true, message: 'Disponible' }; }
+
+      if (conflicts.length === 0) {
+        return { available: true, message: '✅ Disponible pour ces dates' };
+      }
+
+      // Find all booked periods sorted by date
+      const allBooked = existing
+        .map((r: any) => {
+          const d = r.data as any;
+          if (!d || !d.checkIn || !d.checkOut) return null;
+          if (d.propertyId !== propertyId && d.bien !== propertyId) return null;
+          return { checkIn: d.checkIn, checkOut: d.checkOut };
+        })
+        .filter(Boolean)
+        .sort((a: any, b: any) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
+
+      // Find next available date after all conflicts
+      let latestConflictEnd = new Date(0);
+      for (const b of allBooked as any[]) {
+        const eo = new Date(b.checkOut);
+        if (eo > latestConflictEnd) latestConflictEnd = eo;
+      }
+
+      // Add 1 day after last booking ends
+      const nextAvailable = new Date(latestConflictEnd);
+      nextAvailable.setDate(nextAvailable.getDate() + 1);
+      const nextAvailableStr = nextAvailable.toISOString().split('T')[0];
+
+      // Find if there's a gap before the first conflict
+      const firstConflict = (allBooked as any[])[0];
+      const firstConflictStart = firstConflict ? new Date(firstConflict.checkIn) : null;
+
+      let availableUntil: string | undefined;
+      if (firstConflictStart && ci < firstConflictStart) {
+        const dayBefore = new Date(firstConflictStart);
+        dayBefore.setDate(dayBefore.getDate() - 1);
+        availableUntil = dayBefore.toISOString().split('T')[0];
+      }
+
+      const conflictDates = conflicts[0];
+      let msg = `❌ Non disponible — réservé du ${conflictDates.checkIn} au ${conflictDates.checkOut}.`;
+      msg += ` Disponible à partir du ${nextAvailableStr}`;
+      if (availableUntil) msg += ` ou disponible jusqu'au ${availableUntil}`;
+
+      return {
+        available: false,
+        message: msg,
+        nextAvailableFrom: nextAvailableStr,
+        availableUntil,
+        conflicts,
+      };
+    } catch (e) {
+      return { available: true, message: 'Disponible' };
+    }
   }
 }
