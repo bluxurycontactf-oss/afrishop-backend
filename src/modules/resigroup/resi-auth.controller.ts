@@ -55,7 +55,7 @@ export class ResiAuthController {
       });
       const token = this.jwt.sign(
         { sub: admin.id, email: admin.email, role: 'RESI_ADMIN' },
-        { expiresIn: '8h' },
+        { expiresIn: '30d' },
       );
       return { success: true, token, name: admin.name, message: 'Compte créé avec succès !' };
     } catch (e) {
@@ -84,7 +84,7 @@ export class ResiAuthController {
       clearAttempts(ip);
       const token = this.jwt.sign(
         { sub: admin.id, email: admin.email, role: 'RESI_ADMIN' },
-        { expiresIn: '8h' },
+        { expiresIn: '30d' },
       );
       return { success: true, token, name: admin.name };
     } catch (e) {
@@ -111,7 +111,7 @@ export class ResiAuthController {
   async refresh(@Request() req: any) {
     const token = this.jwt.sign(
       { sub: req.user.sub, email: req.user.email, role: 'RESI_ADMIN' },
-      { expiresIn: '8h' },
+      { expiresIn: '30d' },
     );
     return { success: true, token };
   }

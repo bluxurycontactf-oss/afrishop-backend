@@ -204,7 +204,7 @@ export class ResiEmailService {
           </div>
         </div>
         <div class="footer">
-          ResiGo Admin · <a href="https://resigo.web.app/admin.html" style="color:#60A5FA">Ouvrir l'admin →</a>
+          ResiGo Admin · <a href="https://resigo.web.app/lolade7766.html" style="color:#60A5FA">Ouvrir l'admin →</a>
         </div>
       </div>
     </body></html>`;

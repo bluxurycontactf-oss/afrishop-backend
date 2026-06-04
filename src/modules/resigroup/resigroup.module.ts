@@ -15,7 +15,7 @@ import { JwtModule } from '@nestjs/jwt';
     PrismaModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'afrishop-secret',
-      signOptions: { expiresIn: '8h' }, // Réduit de 30j à 8h
+      signOptions: { expiresIn: '30d' }, // Réduit de 30j à 8h
     }),
   ],
   controllers: [ResiContentController, ResiRequestController, ResiAuthController, ResiCustomerController],
