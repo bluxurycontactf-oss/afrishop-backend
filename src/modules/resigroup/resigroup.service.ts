@@ -219,4 +219,67 @@ export class ResiGroupService {
       return { available: true, message: 'Disponible' };
     }
   }
+
+  // ─── ASSISTANT IA — apprentissage supervisé ────────────────
+
+  private normalizeQuestion(q: string): string {
+    return (q || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  async logUnansweredQuestion(question: string) {
+    const norm = this.normalizeQuestion(question);
+    if (!norm || norm.length < 3) return { success: true };
+    try {
+      const existing = await this.prisma.resiAiUnanswered.findFirst({ where: { question: norm } });
+      if (existing) {
+        await this.prisma.resiAiUnanswered.update({
+          where: { id: existing.id },
+          data: { count: { increment: 1 }, lastAsked: new Date() },
+        });
+      } else {
+        await this.prisma.resiAiUnanswered.create({ data: { question: norm } });
+      }
+      return { success: true };
+    } catch (e) {
+      return { success: true };
+    }
+  }
+
+  async getUnansweredQuestions() {
+    return this.prisma.resiAiUnanswered.findMany({
+      orderBy: [{ count: 'desc' }, { lastAsked: 'desc' }],
+      take: 50,
+    });
+  }
+
+  async dismissUnansweredQuestion(id: string) {
+    try { await this.prisma.resiAiUnanswered.delete({ where: { id } }); } catch (e) {}
+    return { success: true };
+  }
+
+  async getAiKnowledge() {
+    return this.prisma.resiAiKnowledge.findMany({ orderBy: { createdAt: 'desc' } });
+  }
+
+  async teachAiAnswer(keywords: string, answer: string, unansweredId?: string) {
+    const kw = (keywords || '').trim();
+    const ans = (answer || '').trim();
+    if (!kw || !ans) throw new Error('Mots-clés et réponse requis');
+
+    const created = await this.prisma.resiAiKnowledge.create({ data: { keywords: kw, answer: ans } });
+    if (unansweredId) {
+      try { await this.prisma.resiAiUnanswered.delete({ where: { id: unansweredId } }); } catch (e) {}
+    }
+    return created;
+  }
+
+  async deleteAiKnowledge(id: string) {
+    try { await this.prisma.resiAiKnowledge.delete({ where: { id } }); } catch (e) {}
+    return { success: true };
+  }
 }

@@ -430,3 +430,21 @@ model ResiCustomer {
   updatedAt    DateTime      @updatedAt
   @@map("resi_customers")
 }
+
+model ResiAiUnanswered {
+  id        String   @id @default(uuid())
+  question  String
+  count     Int      @default(1)
+  lastAsked DateTime @default(now())
+  createdAt DateTime @default(now())
+  @@map("resi_ai_unanswered")
+}
+
+model ResiAiKnowledge {
+  id        String   @id @default(uuid())
+  keywords  String   // mots-clés séparés par virgule, utilisés pour reconnaître la question
+  answer    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("resi_ai_knowledge")
+}

@@ -3,6 +3,7 @@ import { ResiContentController } from './resi-content.controller';
 import { ResiRequestController } from './resi-request.controller';
 import { ResiAuthController } from './resi-auth.controller';
 import { ResiCustomerController } from './resi-customer.controller';
+import { ResiAiController } from './resi-ai.controller';
 import { ResiGroupService } from './resigroup.service';
 import { ResiEmailService } from './resi-email.service';
 import { ResiAdminGuard } from './resi-admin.guard';
@@ -18,7 +19,7 @@ import { JwtModule } from '@nestjs/jwt';
       signOptions: { expiresIn: '30d' }, // Réduit de 30j à 8h
     }),
   ],
-  controllers: [ResiContentController, ResiRequestController, ResiAuthController, ResiCustomerController],
+  controllers: [ResiContentController, ResiRequestController, ResiAuthController, ResiCustomerController, ResiAiController],
   providers: [ResiGroupService, ResiEmailService, ResiAdminGuard, ResiCustomerGuard],
 })
 export class ResiGroupModule {}
