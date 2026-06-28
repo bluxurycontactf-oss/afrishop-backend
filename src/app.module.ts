@@ -18,6 +18,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
 import { PushModule } from './modules/push/push.module';
 import { ResiGroupModule } from './modules/resigroup/resigroup.module';
+import { LebonsamaritainModule } from './modules/lebonsamaritain/lebonsamaritain.module';
 import { PrismaModule } from './config/prisma.module';
 
 @Module({
@@ -55,6 +56,7 @@ import { PrismaModule } from './config/prisma.module';
     CouponsModule,
     PushModule,
     ResiGroupModule,
+    LebonsamaritainModule,
   ],
 })
 export class AppModule {}

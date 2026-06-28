@@ -448,3 +448,25 @@ model ResiAiKnowledge {
   updatedAt DateTime @updatedAt
   @@map("resi_ai_knowledge")
 }
+
+// ── Le Bon Samaritain — Contenu du site (back-office) ────────
+model LbsContent {
+  id        String   @id @default(uuid())
+  key       String   @unique // 'categories' | 'products' | 'gallery' | 'testimonials' | 'blog' | 'settings'
+  data      Json
+  updatedAt DateTime @updatedAt
+
+  @@map("lbs_content")
+}
+
+// ── Le Bon Samaritain — Admin credentials ─────────────────────
+model LbsAdmin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String   @default("Admin")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("lbs_admin")
+}

@@ -26,6 +26,8 @@ const wallet_module_1 = require("./modules/wallet/wallet.module");
 const reviews_module_1 = require("./modules/reviews/reviews.module");
 const coupons_module_1 = require("./modules/coupons/coupons.module");
 const push_module_1 = require("./modules/push/push.module");
+const resigroup_module_1 = require("./modules/resigroup/resigroup.module");
+const lebonsamaritain_module_1 = require("./modules/lebonsamaritain/lebonsamaritain.module");
 const prisma_module_1 = require("./config/prisma.module");
 let AppModule = class AppModule {
 };
@@ -56,6 +58,8 @@ exports.AppModule = AppModule = __decorate([
             reviews_module_1.ReviewsModule,
             coupons_module_1.CouponsModule,
             push_module_1.PushModule,
+            resigroup_module_1.ResiGroupModule,
+            lebonsamaritain_module_1.LebonsamaritainModule,
         ],
     })
 ], AppModule);

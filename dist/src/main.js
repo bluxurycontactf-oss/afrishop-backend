@@ -14,6 +14,8 @@ async function createNestApp() {
     if (app)
         return app;
     app = await core_1.NestFactory.create(app_module_1.AppModule, new platform_express_1.ExpressAdapter(exports.expressApp));
+    exports.expressApp.use(express.json({ limit: '50mb' }));
+    exports.expressApp.use(express.urlencoded({ limit: '50mb', extended: true }));
     app.enableCors({
         origin: [
             process.env.FRONTEND_URL || 'http://localhost:3000',
